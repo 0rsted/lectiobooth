@@ -1,15 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "commonjs",
     "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "noImplicitAny": true,
-    "sourceMap": true,
     "baseUrl": ".",
-    "outDir": "dist",
+    "esModuleInterop": true,
+    "module": "es2022",
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "noImplicitAny": true,
+    "outDir": "dist",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "target": "ESNext",
+    "types": [
+      "unplugin-fonts/client",
+      "vite/client"
+    ]
   }
 }

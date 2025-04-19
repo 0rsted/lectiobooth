@@ -27,5 +27,20 @@
  */
 
 import './index.css';
+// eslint-disable-next-line import/no-unresolved
+import 'unfonts.css'
 
 console.log('👋 This message is being logged by "renderer.ts", included via Vite');
+
+const cookieDataField = document.getElementById('cookiedata')
+  // Query all cookies.
+  // @ts-expect-error: lectiocamApi is an unknown, but it is real
+  window.lectiocamApi.getCookies({})
+/*    .then((cookies: any) => {
+      console.log(cookies)
+      cookieDataField.innerText = JSON.stringify({cookies}, null, '  ')
+    }).catch((error: any) => {
+      console.error(error)
+      cookieDataField.innerText = JSON.stringify({error}, null, '  ')
+    })
+*/
