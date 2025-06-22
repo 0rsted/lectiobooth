@@ -16,6 +16,11 @@ export default defineConfig({
             local: 'SF Pro Display',
             src: './src/assets/fonts/sfPro/sf-pro-display*',
           },
+          {
+            name: 'Signa',
+            local: 'Signa',
+            src: './src/assets/fonts/signa/signa*',
+          },
         ],
       },
     })
