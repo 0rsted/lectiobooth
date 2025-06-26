@@ -12,5 +12,8 @@
     "plugin:import/electron",
     "plugin:import/typescript"
   ],
+  "rules": {
+    "ts-expect-error": "allow-with-description"
+  },
   "parser": "@typescript-eslint/parser"
 }

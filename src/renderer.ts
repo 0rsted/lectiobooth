@@ -26,21 +26,68 @@
  * ```
  */
 
-import './index.css';
 // eslint-disable-next-line import/no-unresolved
 import 'unfonts.css'
+import './index.css';
+import { getCameraData } from './functions/getCameraData';
+import { selectCamera } from './functions/selectCamera';
+import { getAllSchools } from './functions/getAllSchools';
+import { clear } from './functions/storage';
 
-console.log('👋 This message is being logged by "renderer.ts", included via Vite');
+const KonamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'B', 'A']
+let KonamiPos = 0
 
-const cookieDataField = document.getElementById('cookiedata')
-  // Query all cookies.
-  // @ts-expect-error: lectiocamApi is an unknown, but it is real
-  window.lectiocamApi.getCookies({})
-/*    .then((cookies: any) => {
-      console.log(cookies)
-      cookieDataField.innerText = JSON.stringify({cookies}, null, '  ')
-    }).catch((error: any) => {
-      console.error(error)
-      cookieDataField.innerText = JSON.stringify({error}, null, '  ')
+const keyEvents = [
+  {
+    key: 'F12',
+    altKey: true,
+    ctrlKey: false,
+    fnc: () => {
+      clear()
+    }
+  }
+]
+
+const keyListener = (event: KeyboardEvent) => {
+  if(event.key.toLowerCase() === KonamiCode[KonamiPos].toLowerCase()) {
+    KonamiPos++
+    if(KonamiPos === KonamiCode.length) {
+      console.log('KONAMI')
+      KonamiPos = 0
+    }
+  } else { KonamiPos = 0 }
+  keyEvents.find((keyEvent) => (
+    keyEvent.key === event.key && 
+    keyEvent.altKey === event.altKey && 
+    keyEvent.ctrlKey === event.ctrlKey)
+  )?.fnc()
+}
+
+
+window.addEventListener('storageUpdated', event => {console.log(JSON.stringify(event, null, ' '))})
+window.addEventListener('keyup', keyListener)
+
+const cameras = await getCameraData()
+const newList = document.createElement('ul')
+for (const camera of cameras) {
+  const newItem = document.createElement('li')
+  newItem.textContent = camera.label
+    newItem.addEventListener('click', () => {
+      newItem.setAttribute('open', newItem.getAttribute('open') === 'true' ? 'false' : 'true')
     })
-*/
+  const subList = document.createElement('ul')
+  for (const resolution of camera.verifiedResolutions) {
+    const subItem = document.createElement('li')
+    subItem.textContent = resolution.name
+    subItem.addEventListener('click', () => {
+      selectCamera(camera, resolution)
+    })
+    subList.appendChild(subItem)
+  }
+  newItem.appendChild(subList)
+  newList.appendChild(newItem)
+}
+document.body.appendChild(newList)
+const schools = await getAllSchools()
+console.log({schools})
+//camList.textContent += JSON.stringify({cameras}, null, '  ')

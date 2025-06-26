@@ -18,7 +18,22 @@ const createWindow = () => {
       textAreasAreResizable: false,
     },
   });
+  win.webContents.session.webRequest.onBeforeSendHeaders(
+    (details, callback) => {
+      callback({ requestHeaders: { Origin: '*', ...details.requestHeaders } });
+    },
+  );
+
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        'Access-Control-Allow-Origin': ['*'],
+        ...details.responseHeaders,
+      },
+    });
+  });
   app.on('quit', (electronEvent, exitCode) => {
+    console.log(electronEvent)
     if (exitCode !== 0)
       app.relaunch()
   })
@@ -29,8 +44,8 @@ const createWindow = () => {
     win.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
   win.removeMenu()
-  if(import.meta.env.MODE === 'development' || import.meta.env.DEV) {
-    console.log(JSON.stringify({import:{meta:{env:import.meta.env}}}, null, '  '))
+  if (import.meta.env.MODE === 'development' || import.meta.env.DEV) {
+    console.log(JSON.stringify({ import: { meta: { env: import.meta.env } } }, null, '  '))
     // if we're running in dev mode, let's use the devtools
     // Open the DevTools.
     win.webContents.openDevTools({ mode: 'detach' });

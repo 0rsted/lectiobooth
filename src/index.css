@@ -1,6 +1,40 @@
+:root {
+  user-select: none;
+}
+
+html {
+  background-color: rgb(30, 30, 38);
+  color: rgb(179, 179, 177);
+}
+
 body {
-  font-family: 'SF Pro Display', sans-serif;
+  font-family: 'Signa', 'SF Pro Display', sans-serif;
   margin: auto;
-  max-width: 38rem;
   padding: 2rem;
+}
+
+li:has(ul) {
+  list-style: none;
+}
+
+li:has(ul)::before {
+  content: '>';
+  margin-right: 0.5em;
+  display: inline-block;
+}
+
+li:has(ul)[open='true']::before {
+  transform: rotate(90deg);
+}
+
+li:has(ul)>ul {
+  display: none;
+}
+
+li:has(ul)[open='true']>ul {
+  display: initial;
+}
+
+li:has(ul)[open='true']>ul>li {
+  margin-left: 2em;
 }
