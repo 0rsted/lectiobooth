@@ -6,7 +6,7 @@ export const setItem = (key: string, value: string) => {
   doEvent()
 }
 
-export const getItem = storage.getItem
+export const getItem = storage.getItem.bind(storage)
 
 export const clear = () => {
   storage.clear()
