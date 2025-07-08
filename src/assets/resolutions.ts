@@ -1,7 +1,8 @@
 export type resolutionDefinition = {
   name: string,
   height: number,
-  width: number
+  width: number,
+  frameRate?: number,
 }
 
 export const allResolutions: resolutionDefinition[] = [
