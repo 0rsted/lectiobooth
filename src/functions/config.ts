@@ -14,35 +14,47 @@ export type expectedConfig = {
   apiUser: string;
   apiPass: string;
   deviceId?: string;
-  deviceResolution: {
+  deviceResolution?: {
     width: number;
     height?: number;
+    name?: string;
   } | {
     width?: number;
     height: number;
+    name?: string;
   };
   infoText?: string;
+  isFilled?: boolean;
+  allowRetake: boolean;
+  userCpr?: string;
 }
 
 const defaultConfig: expectedConfig = {
   schoolId: -1,
   apiUser: "",
   apiPass: "",
-  deviceResolution: { width: 160 }
+  allowRetake: false,
 }
 
-export class config {
+export class Configuration {
   private current: expectedConfig = Object.assign({}, defaultConfig)
+  private previous: expectedConfig = Object.assign({}, defaultConfig)
 
   constructor() {
     this.load()
+    window.addEventListener("configUpdated", function () { console.log('configUpdated, load'); this.load() }.bind(this))
+    window.addEventListener("storageUpdated", function () {
+      window.dispatchEvent(new CustomEvent("configUpdated", { detail: 'storageUpdated, loading config' }))
+    }.bind(this))
   }
 
-  private save = () => {
+  private save = (): void => {
     setItem(savedConfig, JSON.stringify(this.current))
+    window.dispatchEvent(new CustomEvent("configUpdated", { detail: { current: this.current, previous: this.previous } }))
+    this.previous = this.current
   }
 
-  private load = () => {
+  private load = (): void => {
     try {
       const tempVal = getItem(savedConfig)
       if (tempVal) {
@@ -54,7 +66,7 @@ export class config {
     } catch { }
   }
 
-  public reset() {
+  public reset(): void {
     this.current = Object.assign({}, defaultConfig)
     this.save()
   }
@@ -103,4 +115,29 @@ export class config {
   }
   public get infoText() { return this.current.infoText }
 
+  public set allowRetake(allowRetake: boolean) {
+    this.current.allowRetake = allowRetake
+    this.save()
+  }
+
+  public get allowRetake() { return this.current.allowRetake }
+
+  public set userCpr(userCpr: string) {
+    this.current.userCpr = userCpr
+    this.save()
+  }
+
+  public get userCpr() { return this.current.userCpr }
+
+  public clearUserCpr(): void { delete this.current.userCpr }
+
+  public get isFilled(): expectedConfig['isFilled'] {
+    return (
+      (this.current.schoolId !== -1) && 
+      (this.current.apiUser !== '') &&
+      (this.current.apiPass !== '') && 
+      (this.current.deviceId && this.current.deviceId !== '') && 
+      (this.current.infoText && this.current.infoText !== '') && 
+      (!!this.current.deviceResolution.height || !!this.current.deviceResolution.height))
+  }
 }
