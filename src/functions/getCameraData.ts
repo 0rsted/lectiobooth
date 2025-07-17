@@ -32,7 +32,8 @@ export const getCameraData = async (): Promise<cameraData[]> => {
           width,
           possibleResolutions
         }
-        cameras.push(await solveCameraResolutions(newDevice))
+        cameras.push(newDevice)
+        // cameras.push(await solveCameraResolutions(newDevice))
       }
     }
   } catch (e) { console.error(e) }
@@ -49,7 +50,8 @@ export const solveCameraResolutions = async (camera: cameraData): Promise<camera
   const baseConstraints = {
     audio: false,
     video: {
-      deviceId
+      deviceId,
+      frameRate: { min: 1, max: 60 },
     }
   }
   const stream = await navigator.mediaDevices.getUserMedia(baseConstraints)
@@ -64,10 +66,10 @@ export const solveCameraResolutions = async (camera: cameraData): Promise<camera
       await videoTrack.applyConstraints(Object.assign({width: resolution.width}, baseConstraints.video))
       const current = videoTrack.getSettings()
       if(current.width === resolution.width && current.height === resolution.height)
-        camera.verifiedResolutions.push(resolution)
+        camera.verifiedResolutions.push({...resolution, frameRate: current.frameRate})
     } catch {/* just go to the next option */}
   }
   if(camera.verifiedResolutions.length > 0)
-    camera.possibleResolutions = undefined
+    delete camera.possibleResolutions
   return camera
 }
