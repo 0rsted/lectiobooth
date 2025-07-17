@@ -7,31 +7,55 @@ if (started) {
   app.quit();
 }
 
+function UpsertKeyValue(obj: Record<string, string> | Record<string, string[]>, keyToChange: string, value: string[]) {
+  const keyToChangeLower = keyToChange.toLowerCase();
+  for (const key of Object.keys(obj)) {
+    if (key.toLowerCase() === keyToChangeLower) {
+      // Reassign old key
+      obj[key] = value;
+      // Done
+      return;
+    }
+  }
+  // Insert at end instead
+  obj[keyToChange] = value;
+}
+
 const createWindow = () => {
   // Create the browser window.
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    //    center: true,
+    //    fullscreen: true,
+    //    kiosk: true,
+    //    frame: false,
     webPreferences: {
       nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js'),
-      textAreasAreResizable: false,
+      textAreasAreResizable: true,
+      webSecurity: false,
     },
   });
+
+
   win.webContents.session.webRequest.onBeforeSendHeaders(
     (details, callback) => {
-      callback({ requestHeaders: { Origin: '*', ...details.requestHeaders } });
+      const { requestHeaders } = details;
+      UpsertKeyValue(requestHeaders, 'Access-Control-Allow-Origin', ['*']);
+      callback({ requestHeaders });
     },
   );
 
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    const { responseHeaders } = details;
+    UpsertKeyValue(responseHeaders, 'Access-Control-Allow-Origin', ['*']);
+    UpsertKeyValue(responseHeaders, 'Access-Control-Allow-Headers', ['*']);
     callback({
-      responseHeaders: {
-        'Access-Control-Allow-Origin': ['*'],
-        ...details.responseHeaders,
-      },
+      responseHeaders,
     });
   });
+
   app.on('quit', (electronEvent, exitCode) => {
     console.log(electronEvent)
     if (exitCode !== 0)
