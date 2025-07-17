@@ -1,0 +1,1 @@
+export const changePage = (pageName: string) => window.dispatchEvent(new CustomEvent('changePage', { detail: {pageName} }))
