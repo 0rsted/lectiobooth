@@ -1,8 +1,7 @@
-type cell = HTMLElement
+type cell = HTMLElement | Text
 type row = cell[]
 
 export const table = (bodyCells: row[], headerCells?: row, footerCells?: row) => {
-
   // elements for the table
   const table = document.createElement('table')
 
@@ -12,7 +11,7 @@ export const table = (bodyCells: row[], headerCells?: row, footerCells?: row) =>
     for (const currentCell of headerCells) {
       const th = document.createElement('th')
       th.appendChild(
-        (currentCell instanceof HTMLElement)
+        (currentCell instanceof HTMLElement || currentCell instanceof Text)
           ? currentCell
           : document.createTextNode('')
       )
@@ -29,31 +28,31 @@ export const table = (bodyCells: row[], headerCells?: row, footerCells?: row) =>
       const td = document.createElement('td')
       td.style.verticalAlign = 'top'
       td.appendChild(
-        (currentCell instanceof HTMLElement)
-          ? currentCell
-          : document.createTextNode('')
+        (currentCell instanceof HTMLElement || currentCell instanceof Text)
+        ? currentCell
+        : document.createTextNode('')
       )
       tr.appendChild(td)
     }
     tbody.appendChild(tr)
   }
   table.appendChild(tbody)
-
+  
   if (headerCells || footerCells) {
     const tfoot = document.createElement('tfoot')
     const tr = document.createElement('tr')
-    for (const currentCell of footerCells || headerCells) {
+    for (const currentCell of (footerCells || headerCells)) {
       const th = document.createElement('th')
       th.appendChild(
-        (currentCell instanceof HTMLElement)
-          ? currentCell
-          : document.createTextNode('')
+        (currentCell instanceof HTMLElement || currentCell instanceof Text)
+        ? currentCell
+        : document.createTextNode('')
       )
       tr.appendChild(th)
     }
     tfoot.appendChild(tr)
     table.appendChild(tfoot)
   }
-
+  
   return table
 }
