@@ -1,16 +1,28 @@
 :root {
   user-select: none;
+  --bgColor: rgb(30, 30, 38);
+  --bgDiffColor: rgb(31, 38, 31);
+  --creenColor: rgb(0, 200, 0);
+  --redColor: rgb(200, 0, 0);
+  --fgColor: rgb(179, 179, 177);
+  --windowPadding: 2rem;
+  --hourglass: '\23F3';
+  --checkmark: '\2714';
+  --error: '\2718';
 }
 
 html {
-  background-color: rgb(30, 30, 38);
-  color: rgb(179, 179, 177);
+  background-color: var(--bgColor);
+  color: var(--fgColor);
 }
 
 body {
   font-family: 'Signa', 'SF Pro Display', sans-serif;
   margin: auto;
-  padding: 2rem;
+  padding: var(--windowPadding);
+  max-width: calc(100vw - var(--windowPadding));
+  white-space: pre-line;
+  overflow-x: hidden;
 }
 
 li:has(ul) {
@@ -37,4 +49,74 @@ li:has(ul)[open='true']>ul {
 
 li:has(ul)[open='true']>ul>li {
   margin-left: 2em;
+}
+
+.blockSpan,
+.clickSpan {
+  display: block;
+}
+
+.clickSpan {
+  cursor: pointer;
+}
+
+.clickSpan.selected::before {
+  content: '»';
+}
+
+.clickSpan.selected::after {
+  content: '«';
+}
+
+.clickSpan:hover {
+  background-color: var(--bgDiffColor);
+}
+
+.filled::before {
+  font-family: Courier, monospace;
+  color: var(--creenColor);
+  content: var(--checkmark) " ";
+}
+
+tr:not(:last-of-type) {
+  border-bottom: 2px solid var(--fgColor);
+}
+
+td {
+  white-space: nowrap;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
+
+table {
+  max-width: calc(100vw - var(--windowPadding));
+  overflow-x: hidden;
+}
+
+.hideOverflow {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chosenCameraId {
+  max-width: 300px;
+}
+
+.test {
+  font-family: Courier, monospace;
+}
+
+.test.success::after {
+  color: var(--creenColor);
+  content: var(--checkmark);
+}
+
+.test.fail::after {
+  color: var(--redColor);
+  content: var(--error);
+}
+
+.test.running::after {
+  content: var(--hourglass);
 }
