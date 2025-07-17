@@ -7,6 +7,9 @@
     "moduleResolution": "node",
     "noImplicitAny": true,
     "outDir": "dist",
+    "paths": {
+      "src/*": ["./src/*"]
+    },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
@@ -15,5 +18,8 @@
       "unplugin-fonts/client",
       "vite/client"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

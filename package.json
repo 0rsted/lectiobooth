@@ -1,11 +1,11 @@
 {
-  "name": "lectiocam",
-  "productName": "lectiocam",
-  "version": "1.0.0",
-  "description": "My Electron application description",
+  "name": "lectiobooth",
+  "productName": "LectioBooth",
+  "version": "0.1.0",
+  "description": "A photobooth style program for Lectio",
   "main": ".vite/build/main.js",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "set DEBUG=client,renderer & electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -27,20 +27,29 @@
     "@electron-forge/plugin-fuses": "^7.8.0",
     "@electron-forge/plugin-vite": "^7.8.0",
     "@electron/fuses": "^1.8.0",
+    "@types/debug": "^4.1.12",
     "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/html": "^1.0.4",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
+    "debug": "^4.4.1",
     "electron": "35.1.5",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.31.0",
+    "supports-color": "^10.0.0",
     "ts-node": "^10.9.2",
     "typescript": "~4.5.4",
     "unplugin-fonts": "^1.3.1",
-    "vite": "^6.3.2"
+    "vite": "^6.3.2",
+    "vite-plugin-node-polyfills": "^0.24.0"
   },
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
+    "axios": "^1.10.0",
     "electron-squirrel-startup": "^1.0.1",
-    "htmlparser2": "^10.0.0"
+    "fireworks-js": "^2.10.8",
+    "htmlparser2": "^10.0.0",
+    "soap": "^1.1.12"
   }
 }
