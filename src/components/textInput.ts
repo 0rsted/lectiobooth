@@ -1,6 +1,4 @@
-import { type Configuration } from "src/functions/config"
-
-export const textInput = (id: string, value?: string, onChange?: (this: HTMLInputElement, ev: Event) => any, isPassword: boolean = false) => {
+export const textInput = (id: string, value?: string, onChange?: (this: HTMLInputElement, ev: Event) => any, isPassword = false) => {
   const element = document.createElement('input')
   element.id = id
   element.name = id
