@@ -1,4 +1,4 @@
-type cell = HTMLElement | Text
+type cell = HTMLElement | Text | undefined
 type row = cell[]
 
 export const table = (bodyCells: row[], headerCells?: row, footerCells?: row) => {
@@ -30,7 +30,7 @@ export const table = (bodyCells: row[], headerCells?: row, footerCells?: row) =>
       td.appendChild(
         (currentCell instanceof HTMLElement || currentCell instanceof Text)
         ? currentCell
-        : document.createTextNode('')
+        : document.createTextNode('\u00A0')
       )
       tr.appendChild(td)
     }
