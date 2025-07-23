@@ -1,7 +1,8 @@
 import axios from "axios"
 import { Configuration } from "../functions/config"
 import * as soap from 'soap'
-var debug = require('debug')('client')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const debug = require('debug')('client')
 
 export const getAxios = () => {
   const ax = axios.create({
