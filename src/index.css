@@ -5,24 +5,42 @@
   --creenColor: rgb(0, 200, 0);
   --redColor: rgb(200, 0, 0);
   --fgColor: rgb(179, 179, 177);
-  --windowPadding: 2rem;
+  --windowPadding: 1.5rem;
   --hourglass: '\23F3';
   --checkmark: '\2714';
   --error: '\2718';
+  --schoolPrimaryColor: rgb(255, 255, 255);
+  --schoolPrimaryColor: rgb(200, 0, 0);
 }
 
 html {
   background-color: var(--bgColor);
   color: var(--fgColor);
+  margin: 0;
+  padding: 0;
 }
 
 body {
   font-family: 'Signa', 'SF Pro Display', sans-serif;
   margin: auto;
   padding: var(--windowPadding);
-  max-width: calc(100vw - var(--windowPadding));
+  width: calc(100vw - var(--windowPadding) * 2);
+  height: calc(100vw - var(--windowPadding) * 2);
+  max-width: calc(100vw - var(--windowPadding) * 2);
+  min-width: calc(100vw - var(--windowPadding) * 2);
+  max-height: calc(100vh - var(--windowPadding) * 2);
+  min-height: calc(100vh - var(--windowPadding) * 2);
   white-space: pre-line;
   overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body > *:last-child {
+  padding-bottom: var(--windowPadding);
+}
+
+h1 {
+  margin-top: 0;
 }
 
 li:has(ul) {
@@ -103,20 +121,24 @@ table {
   max-width: 300px;
 }
 
-.test {
-  font-family: Courier, monospace;
-}
-
-.test.success::after {
+.connectionTest.success::after {
   color: var(--creenColor);
   content: var(--checkmark);
 }
 
-.test.fail::after {
+.connectionTest.fail::after {
   color: var(--redColor);
   content: var(--error);
 }
 
-.test.running::after {
+.connectionTest.running::after {
   content: var(--hourglass);
+}
+
+.absoluteCenter {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
