@@ -2,15 +2,11 @@ import { setItem, getItem } from "./storage"
 
 const savedConfig = 'config'
 
-type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
-  Pick<T, Exclude<keyof T, Keys>>
-  & {
-    [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>
-  }[Keys]
-
 export type expectedConfig = {
   schoolId: number;
   schoolName?: string;
+  schoolPrimaryColor: string;
+  schoolSecondaryColor: string;
   apiUser: string;
   apiPass: string;
   deviceId?: string;
@@ -33,7 +29,11 @@ const defaultConfig: expectedConfig = {
   schoolId: -1,
   apiUser: "",
   apiPass: "",
+  infoText: undefined,
   allowRetake: false,
+  deviceResolution: undefined,
+  schoolPrimaryColor: "#FFFFFF",
+  schoolSecondaryColor: "#FF0000",
 }
 
 export class Configuration {
@@ -60,13 +60,14 @@ export class Configuration {
       if (tempVal) {
         const parsed = JSON.parse(tempVal)
         if (parsed) {
-          this.current = parsed
+          this.current = Object.assign({}, defaultConfig, parsed)
         }
       }
-    } catch { }
+    } catch { /* this block intentionally left empty */ }
   }
 
   public reset(): void {
+    this.current = {} as unknown as expectedConfig
     this.current = Object.assign({}, defaultConfig)
     this.save()
   }
@@ -122,6 +123,20 @@ export class Configuration {
 
   public get allowRetake() { return this.current.allowRetake }
 
+  public set schoolPrimaryColor(schoolPrimaryColor: string) {
+    this.current.schoolPrimaryColor = schoolPrimaryColor
+    this.save()
+  }
+
+  public get schoolPrimaryColor() { return this.current.schoolPrimaryColor }
+  
+  public set schoolSecondaryColor(schoolSecondaryColor: string) {
+    this.current.schoolSecondaryColor = schoolSecondaryColor
+    this.save()
+  }
+  
+  public get schoolSecondaryColor() { return this.current.schoolSecondaryColor }
+
   public set userCpr(userCpr: string) {
     this.current.userCpr = userCpr
     this.save()
@@ -129,7 +144,10 @@ export class Configuration {
 
   public get userCpr() { return this.current.userCpr }
 
-  public clearUserCpr(): void { delete this.current.userCpr }
+  public clearUserCpr(): void {
+    delete this.current.userCpr
+    this.save()
+  }
 
   public get isFilled(): expectedConfig['isFilled'] {
     return (
