@@ -3,6 +3,7 @@ import { getAllSchools } from '../functions/getAllSchools';
 import { Configuration } from '../functions/config';
 import { changePage } from '../functions/changePage';
 import { cameraData, getCameraData, solveCameraResolutions } from '../functions/getCameraData';
+import { Pages } from '.';
 
 import {
   label,
@@ -23,8 +24,6 @@ const filledClass = "filled"
 
 const setupElements = () => {
   const config = new Configuration()
-  const body = document.body
-  clearChildren(body, true)
 
   // create components
 
@@ -71,7 +70,7 @@ const setupElements = () => {
   warningText.autocorrect = 'off'
   warningText.spellcheck = false
   warningText.style.resize = 'both'
-  warningText.addEventListener('change', (e: any) => {
+  warningText.addEventListener('input', (e: any) => {
     config.infoText = e.target.value
   })
 
@@ -90,26 +89,53 @@ const setupElements = () => {
 
   const nextPage = document.createElement('button')
   nextPage.textContent = 'Næste side'
-  nextPage.onclick = () => changePage('scan')
+  nextPage.onclick = () => window.dispatchEvent(changePage(Pages.SCAN))
 
+  const testConnectionLabel = label('testConnection', '\u00A0')
   const testConnectionWrapper = document.createElement('slot')
   const testConnectionButton = document.createElement('button')
+  testConnectionButton.name = testConnectionLabel.getAttribute('for')
+  testConnectionButton.id = testConnectionLabel.getAttribute('for')
   testConnectionButton.textContent = 'Test forbindelse'
-  testConnectionWrapper.appendChild(testConnectionButton)
   const testConnectionResult = document.createElement('span')
-  testConnectionResult.className = 'test'
+  testConnectionResult.className = 'connectionTest'
   testConnectionResult.textContent = ' <- klik her for at verificere at koden virker'
-  testConnectionWrapper.appendChild(testConnectionResult)
+  testConnectionWrapper.append(testConnectionButton, testConnectionResult)
 
-  const allowRetakeLabel = label('allowRetake', 'Tillad eksisterende at tage et nyt billede')
+  const allowRetakeLabel = label('allowRetake', 'Tillad eksisterende\u000D\u000A at tage et nyt billede')
+  allowRetakeLabel.classList.add(filledClass)
   const allowRetakeCheckbox = document.createElement('input')
   allowRetakeCheckbox.type = 'checkbox'
   allowRetakeCheckbox.id = allowRetakeLabel.getAttribute('for')
   allowRetakeCheckbox.name = allowRetakeLabel.getAttribute('for')
   allowRetakeCheckbox.checked = config.allowRetake
   allowRetakeCheckbox.addEventListener('change', (e) => {
-    // @ts-expect-error: again with typescript and events
+    // @ts-expect-error: typescript and events
     config.allowRetake = e.target.checked
+  })
+
+  const primaryColorLabel = label('primaryColor', 'Vælg skolens primære farve')
+  primaryColorLabel.classList.add(filledClass)
+  const primaryColorSelector = document.createElement('input')
+  primaryColorSelector.id = primaryColorLabel.getAttribute('for')
+  primaryColorSelector.name = primaryColorLabel.getAttribute('for')
+  primaryColorSelector.type = 'color'
+  primaryColorSelector.value = config.schoolPrimaryColor
+  primaryColorSelector.addEventListener('input', (e) => {
+    // @ts-expect-error: typescript and events
+    config.schoolPrimaryColor = e.target.value
+  })
+
+  const secondaryColorLabel = label('secondaryColor', 'Vælg skolens primære farve')
+  secondaryColorLabel.classList.add(filledClass)
+  const secondaryColorSelector = document.createElement('input')
+  secondaryColorSelector.id = secondaryColorLabel.getAttribute('for')
+  secondaryColorSelector.name = secondaryColorLabel.getAttribute('for')
+  secondaryColorSelector.type = 'color'
+  secondaryColorSelector.value = config.schoolSecondaryColor
+  secondaryColorSelector.addEventListener('input', (e) => {
+    // @ts-expect-error: typescript and events
+    config.schoolSecondaryColor = e.target.value
   })
 
   // render
@@ -122,23 +148,29 @@ const setupElements = () => {
     [schoolDropdownLabel, schoolDropdown],
     [userInputLabel, userInput],
     [userPasswordLabel, userPassword],
-    [, testConnectionWrapper],
+    [testConnectionLabel, testConnectionWrapper],
+    [undefined, undefined],
     [warningTextLabel, warningText],
     [allowRetakeLabel, allowRetakeCheckbox],
+    [undefined, undefined],
+    [primaryColorLabel, primaryColorSelector],
+    [secondaryColorLabel, secondaryColorSelector],
+    [undefined, undefined],
     [chooseCameraLabel, chooseCameraWrapper],
     [chooseResolutionLabel, chooseResolutionField],
-    [, nextPage]
+    [undefined, nextPage]
   ]))
   // effects should always run after render
 
   const updateLabels = () => {
+    for (const elm of document.getElementsByClassName(filledClass)) {
+      elm.classList.remove(filledClass)
+    }
     testConnectionButton.disabled = ((config.schoolId === -1) && (config.apiUser === '') && (config.apiPass === ''))
     nextPage.disabled = !(config.isFilled && testConnectionResult.classList.contains('success'))
     if (config.schoolId !== -1) {
-      if (!schoolDropdown.classList.contains(filledClass))
-        schoolDropdownLabel.classList.add(filledClass)
+      schoolDropdownLabel.classList.add(filledClass)
     } else {
-      schoolDropdownLabel.classList.remove(filledClass)
       schoolDropdown.selectedIndex = 0
     }
 
@@ -147,6 +179,7 @@ const setupElements = () => {
         userInputLabel.classList.add(filledClass)
     } else {
       userInputLabel.classList.remove(filledClass)
+      userInput.value = ""
     }
 
     if (config.apiPass !== "") {
@@ -154,6 +187,7 @@ const setupElements = () => {
         userPasswordLabel.classList.add(filledClass)
     } else {
       userPasswordLabel.classList.remove(filledClass)
+      userPassword.value = ""
     }
 
     if (config.infoText && config.infoText !== "") {
@@ -161,18 +195,17 @@ const setupElements = () => {
         warningTextLabel.classList.add(filledClass)
     } else {
       warningTextLabel.classList.remove(filledClass)
+      warningText.textContent = ""
     }
 
     if (config.camera && config.camera !== "") {
-      if (!chooseCameraLabel.classList.contains(filledClass)) {
-        const chosenCameraId = document.createElement('span')
-        chooseCameraLabel.classList.add(filledClass)
-        chosenCameraId.className = 'blockSpan hideOverflow chosenCameraId'
-        chosenCameraId.textContent = `Kamera valgt (${config.camera})\r\n`
-        chooseCameraWrapper.prepend(chosenCameraId)
-      }
+      const chosenCameraId = document.getElementById('chosenCamera') || document.createElement('span')
+      chosenCameraId.id = 'chosenCamera'
+      chooseCameraLabel.classList.add(filledClass)
+      chosenCameraId.className = 'blockSpan hideOverflow chosenCameraId'
+      chosenCameraId.textContent = `Kamera valgt (${config.camera})\r\n`
+      chooseCameraWrapper.prepend(chosenCameraId)
     } else {
-      chooseCameraLabel.classList.remove(filledClass)
       chooseCameraWrapper.childNodes.forEach(child => {
         // @ts-expect-error: TS doesn't think a child has a classList
         if (child.classList.contains('chosenCameraId'))
@@ -181,14 +214,14 @@ const setupElements = () => {
     }
 
     if (config.resolution && (config.resolution.height || config.resolution.width)) {
-      if (!chooseResolutionLabel.classList.contains(filledClass)) {
-        chooseResolutionLabel.classList.add(filledClass)
-        chooseResolutionField.textContent = (config.resolution.name + '\r\n' || `${config.resolution.width} × ${config.resolution.height}\r\n`)
-      }
+      chooseResolutionField.textContent = (config.resolution.name + '\r\n' || `${config.resolution.width} × ${config.resolution.height}\r\n`)
+      chooseResolutionLabel.classList.add(filledClass)
     } else {
-      chooseResolutionLabel.classList.remove(filledClass)
       chooseResolutionField.textContent = "Vælg et kamera først"
     }
+    allowRetakeLabel.classList.add(filledClass)
+    primaryColorLabel.classList.add(filledClass)
+    secondaryColorLabel.classList.add(filledClass)
 
   }
   window.addEventListener('configUpdated', updateLabels)
@@ -199,8 +232,10 @@ const setupElements = () => {
     try {
       // @ts-expect-error: electron isn't fully typed
       const response = await window.lectioApi.SayHelloAsync(config.getConfig)
+      console.log(response[0].SayHelloResult)
       testConnectionResult.classList.remove('running')
       testConnectionResult.classList.add('success')
+      testConnectionLabel.classList.add(filledClass)
       updateLabels()
     } catch (e) {
       console.warn(e)

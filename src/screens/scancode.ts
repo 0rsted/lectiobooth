@@ -1,49 +1,11 @@
+import { changePage } from '../functions/changePage';
 import { table } from '../components';
 import { clearChildren } from '../functions/clearChildren'
 import { Configuration } from '../functions/config';
-import { BrowserMultiFormatReader } from '@zxing/browser';
-
-const tmpObj = {
-    "result": {
-        "text": "2010831825",
-        "rawBytes": {
-            "0": 105,
-            "1": 20,
-            "2": 10,
-            "3": 83,
-            "4": 18,
-            "5": 25,
-            "6": 76,
-            "7": 106,
-            "8": 0,
-            "9": 0,
-            "10": 0,
-            "11": 0,
-            "12": 0,
-            "13": 0,
-            "14": 0,
-            "15": 0,
-            "16": 0,
-            "17": 0,
-            "18": 0,
-            "19": 0
-        },
-        "numBits": 0,
-        "resultPoints": [
-            {
-                "x": 377.5,
-                "y": 165
-            },
-            {
-                "x": 219,
-                "y": 165
-            }
-        ],
-        "format": 4,
-        "timestamp": 1752674766109,
-        "resultMetadata": {}
-    }
-}
+import { BrowserMultiFormatOneDReader } from '@zxing/browser';
+import { CPR } from '../functions/cpr';
+import { AddKey, RemoveKey } from '../functions/keyHandler';
+import { Pages } from '.';
 
 export const scanCodeScreen = () => {
   setupElements()
@@ -52,13 +14,15 @@ export default scanCodeScreen
 
 const setupElements = async () => {
   const config = new Configuration()
-  const reader = new BrowserMultiFormatReader()
+  if (!config.camera) {
+    window.dispatchEvent(changePage(Pages.SCAN))
+    return
+  }
+  const reader = new BrowserMultiFormatOneDReader()
   reader.possibleFormats = [2, 3, 4]
-  const body = document.body
-  clearChildren(body)
   const header = document.createElement('h1')
   header.textContent = 'Scan dit sundhedskort'
-  const subtitle = document.createElement('h3')
+  const subtitle = document.createElement('h4')
   subtitle.textContent = '(enten telefon eller det fysiske kort)'
   const previewVideo = document.createElement('video')
   previewVideo.id = 'previewVideo'
@@ -71,8 +35,10 @@ const setupElements = async () => {
   previewCanvas.style.display = 'none'
   const stopButton = document.createElement('button')
   stopButton.textContent = 'Stop kamera'
+  stopButton.disabled = true
   const startButton = document.createElement('button')
   startButton.textContent = 'Start kamera'
+  startButton.disabled = false
   const preview = document.createElement('slot')
   preview.append(previewVideo, previewCanvas)
   const buttons = document.createElement('slot')
@@ -85,29 +51,67 @@ const setupElements = async () => {
   resultArea.append(result, next)
   document.body.appendChild(table([[header], [subtitle], [buttons], [preview], [resultArea]]))
 
-
-  const controls = await reader.decodeFromVideoDevice(config.camera, 'previewVideo', (result, error) => {
-    if(result) {
-      if(result.getText().length !== 10)
-        return
-      console.log({result})
-      previewCanvas.height = previewVideo.videoHeight
-      previewCanvas.width = previewVideo.videoWidth
-      const context = previewCanvas.getContext('2d')
-      context.drawImage(previewVideo, 0, 0, previewCanvas.width, previewCanvas.height)
-      const points = result.getResultPoints()
-      context.lineWidth = 4;
-      context.strokeStyle = "red";
-      context.strokeRect(points[0].getX(), points[0].getY(), points[1].getX() - points[0].getX(), points[1].getY() - points[0].getY())
-      previewVideo.style.display = 'none'
-      previewCanvas.style.display = 'block'
-      return controls.stop()
+  const scanComplete = () => setTimeout(() => window.dispatchEvent(changePage(Pages.PICTUREINTERMEDIATE)), 5000)
+  const startScan = async () => {
+    try {
+      const controls = await reader.decodeFromVideoDevice(config.camera, 'previewVideo', (result, error) => {
+        if (result) {
+          if (!(new CPR(result.getText())).isValid)
+            return
+          previewCanvas.height = previewVideo.videoHeight
+          previewCanvas.width = previewVideo.videoWidth
+          const context = previewCanvas.getContext('2d')
+          context.drawImage(previewVideo, 0, 0, previewCanvas.width, previewCanvas.height)
+          const points = result.getResultPoints()
+          context.lineWidth = 4;
+          context.strokeStyle = "red";
+          context.strokeRect(points[0].getX(), points[0].getY(), points[1].getX() - points[0].getX(), points[1].getY() - points[0].getY())
+          previewVideo.style.display = 'none'
+          previewCanvas.style.display = 'block'
+          config.userCpr = result.getText()
+          scanComplete()
+          return controls.stop()
+        }
+        if (error.name !== 'NotFoundException2')
+          console.warn({ result, error, time: Date.now() })
+      })
+      stopButton.addEventListener('click', () => {
+        controls.stop()
+        startButton.disabled = false
+        stopButton.disabled = true
+      })
+      setTimeout(() => {
+        stopButton.click()
+      }, 30000);
+      startButton.disabled = true
+      stopButton.disabled = false
+    } catch (e) {
+      if (e instanceof OverconstrainedError) {
+        config.camera = undefined
+        config.resolution = undefined
+        window.dispatchEvent(changePage(Pages.SETUP))
+      }
     }
-    if (error.name !== 'NotFoundException2')
-      console.warn({ result, error, time: Date.now() })
-  })
+  }
+  startButton.addEventListener('click', startScan)
+  startButton.click()
+  window.dispatchEvent(AddKey('startCamera', {
+    key: '1',
+    fnc: () => {
+      if (!startButton.disabled)
+        startButton.click()
+    }
+  }))
+  window.dispatchEvent(AddKey('stopCamera', {
+    key: 'Escape',
+    fnc: () => {
+      if (!stopButton.disabled)
+        stopButton.click()
+    }
+  }))
+}
 
-  stopButton.addEventListener('click', () => controls.stop())
-
-
+export const unRender = () => {
+  window.dispatchEvent(RemoveKey('startCamera'))
+  window.dispatchEvent(RemoveKey('stopCamera'))
 }
