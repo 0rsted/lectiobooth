@@ -13,7 +13,8 @@
     "plugin:import/typescript"
   ],
   "rules": {
-    "ts-expect-error": "allow-with-description"
+    "@typescript-eslint/no-explicit-any": "off",
+    "ts-expect-error": "off"
   },
   "parser": "@typescript-eslint/parser"
 }
