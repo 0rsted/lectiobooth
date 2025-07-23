@@ -16,8 +16,8 @@ export interface UpdatePhotoByCprAsync extends UpdatePhotoByCpr {
 }
 
 /** UpdatePhotoByCprResponse */
-export interface UpdatePhotoByCprResponse {
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface UpdatePhotoByCprResponse {}
 
 export const UpdatePhotoByCprAsync = async ({ config, cprNumber, imageJpeg }: UpdatePhotoByCprAsync): Promise<UpdatePhotoByCprResponse> => {
   const client = await getClient(url(config.schoolId), config)
@@ -41,7 +41,7 @@ export interface GetPhotoByCprResponse {
   GetPhotoByCprResult?: string;
 }
 
-export const GetPhotoByCprAsync = async ({ config, cprNumber }: GetPhotoByCprAsync): Promise<GetPhotoByCprResponse> => {
+export const GetPhotoByCprAsync = async ({ config }: GetPhotoByCprAsync): Promise<GetPhotoByCprResponse> => {
   const client = await getClient(url(config.schoolId), config)
-  return await client.GetPhotoByCprAsync({ cprNumber })
+  return await client.GetPhotoByCprAsync({ cprNumber: config.userCpr })
 }
