@@ -1,6 +1,5 @@
-// @ts-expect-error : strong-soap doesn't have any type definitions
-import { createClient, BasicAuthSecurity } from 'strong-soap'
-import { Configuration } from './config.js'
+import { createClient, BasicAuthSecurity } from 'soap'
+import { Configuration } from './config'
 
 export const callSayHello = async () => {
   const config = new Configuration()
