@@ -43,14 +43,16 @@ export class Configuration {
   constructor() {
     this.load()
     window.addEventListener("configUpdated", function () { console.log('configUpdated, load'); this.load() }.bind(this))
+    /*
     window.addEventListener("storageUpdated", function () {
       window.dispatchEvent(new CustomEvent("configUpdated", { detail: 'storageUpdated, loading config' }))
     }.bind(this))
+    */
   }
 
-  private save = (): void => {
+  private save = (dispatchEvent = true): void => {
     setItem(savedConfig, JSON.stringify(this.current))
-    window.dispatchEvent(new CustomEvent("configUpdated", { detail: { current: this.current, previous: this.previous } }))
+    dispatchEvent && window.dispatchEvent(new CustomEvent("configUpdated", { detail: { current: this.current, previous: this.previous } }))
     this.previous = this.current
   }
 
@@ -139,7 +141,7 @@ export class Configuration {
 
   public set userCpr(userCpr: string) {
     this.current.userCpr = userCpr
-    this.save()
+    this.save(false)
   }
 
   public get userCpr() { return this.current.userCpr }
