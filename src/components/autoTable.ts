@@ -1,9 +1,20 @@
 type cell = HTMLElement | Text | undefined
 type row = cell[]
+type config = {
+  headerCells?: row
+  footerCells?: row
+  style?: string
+  className?: string
+}
 
-export const table = (bodyCells: row[], headerCells?: row, footerCells?: row) => {
+export const table = (bodyCells: row[], config?: config) => {
+  const {headerCells, footerCells, style, className} = config ?? {}
   // elements for the table
   const table = document.createElement('table')
+  if(style)
+    table.setAttribute('style', style)
+  if(className)
+    table.className = className
 
   if (headerCells) {
     const thead = document.createElement('thead')
