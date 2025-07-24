@@ -11,10 +11,7 @@ import {
   textInput
 } from '../components'
 
-export const setupScreen = () => {
-  setupElements()
-}
-export default setupScreen
+export const id = 'setup'
 
 const chooseResolutionField = document.createElement('span')
 chooseResolutionField.className = 'blockSpan'
@@ -22,7 +19,7 @@ chooseResolutionField.textContent = 'vælg et kamera først'
 
 const filledClass = "filled"
 
-const setupElements = () => {
+export const renderer = () => {
   const config = new Configuration()
 
   // create components

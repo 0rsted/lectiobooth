@@ -4,11 +4,9 @@ import { clearChildren } from '../functions/clearChildren'
 import { Configuration } from '../functions/config';
 import { spinner, table } from '../components';
 
-export const pictureIntermediateScreen = () => {
-  setupElements()
-}
+export const id = 'pictureintermediate'
 
-const setupElements = async () => {
+export const renderer = async () => {
   const config = new Configuration()
   if (!config.userCpr) {
     window.dispatchEvent(changePage(Pages.SCAN))

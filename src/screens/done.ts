@@ -1,10 +1,8 @@
 import { Configuration } from '../functions/config';
 
-export const doneScreen = () => {
-  setupElements()
-}
+export const id = 'done'
 
-const setupElements = () => {
+export const renderer = () => {
   const config = new Configuration()
   console.log(config.allowRetake)
 }

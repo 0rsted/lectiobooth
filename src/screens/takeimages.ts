@@ -3,19 +3,15 @@ import { spinner } from '../components';
 import { changePage } from '../functions/changePage';
 import { Pages } from '.';
 
-export const takeImagesScreen = () => {
-  setupElements()
-}
-export default takeImagesScreen
+export const id = 'takeimages'
 
-const setupElements = async () => {
+export const renderer = async () => {
   const config = new Configuration()
   if (!config.userCpr)
     window.dispatchEvent(changePage(Pages.SCAN))
-
   const activeSpinner = spinner()
   const body = document.body
-  body.append(activeSpinner, document.createTextNode(config.userCpr))
+  body.append(activeSpinner)
 }
 
 export const unRender = () => {

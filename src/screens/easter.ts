@@ -2,11 +2,9 @@ import { Pages } from '.'
 import { changePage } from '../functions/changePage'
 import { Fireworks } from 'fireworks-js'
 
-export const easter = () => {
-  setupElements()
-}
+export const id = 'easter'
 
-const setupElements = () => {
+export const renderer = () => {
   const body = document.body
   const canvas = document.createElement('canvas')
   canvas.style.height = '100vh'

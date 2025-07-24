@@ -1,23 +1,20 @@
 import { changePage } from '../functions/changePage';
 import { table } from '../components';
-import { clearChildren } from '../functions/clearChildren'
 import { Configuration } from '../functions/config';
 import { BrowserMultiFormatOneDReader } from '@zxing/browser';
 import { CPR } from '../functions/cpr';
 import { AddKey, RemoveKey } from '../functions/keyHandler';
 import { Pages } from '.';
 
-export const scanCodeScreen = () => {
-  setupElements()
-}
-export default scanCodeScreen
+export const id = 'scancode'
 
-const setupElements = async () => {
+export const renderer = async () => {
   const config = new Configuration()
   if (!config.camera) {
     window.dispatchEvent(changePage(Pages.SCAN))
     return
   }
+  document.body.setAttribute('style', 'text-align:center;')
   const reader = new BrowserMultiFormatOneDReader()
   reader.possibleFormats = [2, 3, 4]
   const header = document.createElement('h1')
@@ -49,7 +46,7 @@ const setupElements = async () => {
   next.disabled = true
   const resultArea = document.createElement('slot')
   resultArea.append(result, next)
-  document.body.appendChild(table([[header], [subtitle], [buttons], [preview], [resultArea]]))
+  document.body.appendChild(table([[header], [subtitle], [buttons], [preview], [resultArea]], {className: 'absoluteCenter'}))
 
   const scanComplete = () => setTimeout(() => window.dispatchEvent(changePage(Pages.PICTUREINTERMEDIATE)), 5000)
   const startScan = async () => {
@@ -112,6 +109,7 @@ const setupElements = async () => {
 }
 
 export const unRender = () => {
+  document.body.removeAttribute('style')
   window.dispatchEvent(RemoveKey('startCamera'))
   window.dispatchEvent(RemoveKey('stopCamera'))
 }

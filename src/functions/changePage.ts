@@ -1,13 +1,13 @@
 import { clearChildren } from "./clearChildren"
 
-export type PageFunctions = {
+export type Page = {
   id: string
   renderer: () => any
   unRender?: VoidFunction
 }
 
 export class PageManager {
-  #currentPage?: PageFunctions = {
+  #currentPage?: Page = {
     id: '',
     renderer: () => {/* */}
   }
@@ -38,8 +38,8 @@ export class PageManager {
 }
 
 class ChangePage extends Event {
-  #pageFunctions: PageFunctions
-  constructor(pageFunctions: PageFunctions) {
+  #pageFunctions: Page
+  constructor(pageFunctions: Page) {
     super('changePage')
     this.#pageFunctions = pageFunctions
   }
@@ -48,4 +48,4 @@ class ChangePage extends Event {
   }
 }
 
-export const changePage = (pageFunctions: PageFunctions) => new ChangePage(pageFunctions)
+export const changePage = (pageFunctions: Page) => new ChangePage(pageFunctions)
