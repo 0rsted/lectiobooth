@@ -4,12 +4,12 @@ export type cameraData = {
   deviceId: string
   label: string
   height: {
-    max: number
-    min: number
+    max?: number
+    min?: number
   }
   width: {
-    max: number
-    min: number
+    max?: number
+    min?: number
   },
   possibleResolutions?: resolutionDefinition[]
   verifiedResolutions?: resolutionDefinition[]
@@ -22,9 +22,9 @@ export const getCameraData = async (): Promise<cameraData[]> => {
     const devices = await navigator.mediaDevices.enumerateDevices()
     for (const device of devices) {
       if (device.kind === 'videoinput') {
-        // @ts-expect-error : there is no definition of getCapabilities
-        const { width, height } = device.getCapabilities()
-        const possibleResolutions = allResolutions.filter(resolution => (resolution.height <= height.max && resolution.width <= width.max))
+        // @ts-expect-error: typescript doesn't know that a device should have getCapabilities
+        const { width, height } = device.getCapabilities() as MediaTrackCapabilities
+        const possibleResolutions = allResolutions.filter(resolution => (resolution.height <= height.max && resolution.width <= width.max && resolution.height >= height.min && resolution.width >= width.min))
         const newDevice: cameraData = {
           deviceId: device.deviceId,
           label: device.label,
@@ -33,12 +33,13 @@ export const getCameraData = async (): Promise<cameraData[]> => {
           possibleResolutions
         }
         cameras.push(newDevice)
-        // cameras.push(await solveCameraResolutions(newDevice))
       }
     }
-  } catch (e) { console.error(e) }
+  } catch { /* we'll ignore errors */ }
   return cameras
 }
+
+export const getSingleCameraData = async (cameraId: string) => ((await getCameraData()).find(c => c.deviceId === cameraId))
 
 export const getConstraints = () => {
   return navigator.mediaDevices.getSupportedConstraints()
@@ -60,16 +61,24 @@ export const solveCameraResolutions = async (camera: cameraData): Promise<camera
   if (videoTracks.length > 0) {
     videoTrack = videoTracks[0];
   }
-  if(!videoTrack) return camera
-  for(const resolution of possibleResolutions) {
-    try {
-      await videoTrack.applyConstraints(Object.assign({width: resolution.width}, baseConstraints.video))
-      const current = videoTrack.getSettings()
-      if(current.width === resolution.width && current.height === resolution.height)
-        camera.verifiedResolutions.push({...resolution, frameRate: current.frameRate})
-    } catch {/* just go to the next option */}
+  if (!videoTrack) return camera
+  for (const { width, height } of possibleResolutions) {
+    for (let frameRate = 1; frameRate <= 60; frameRate++) {
+      try {
+        await videoTrack.applyConstraints(Object.assign({ width, height, frameRate }, baseConstraints.video))
+        const current = videoTrack.getSettings()
+        if (current.frameRate > frameRate) {
+          frameRate = current.frameRate - 1
+          continue
+        }
+        if (current.width === width && current.height === height && current.frameRate === frameRate) {
+          const name = allResolutions.find((res) => (res.height === height && res.width === width)).name || `${width} × ${height}` 
+          camera.verifiedResolutions.push(Object.assign({name, height, width, frameRate}, current))
+        }
+      } catch {/* just go to the next option */ }
+    }
   }
-  if(camera.verifiedResolutions.length > 0)
+  if (camera.verifiedResolutions.length > 0)
     delete camera.possibleResolutions
   return camera
 }
