@@ -2,6 +2,23 @@ import { setItem, getItem } from "./storage"
 
 const savedConfig = 'config'
 
+export enum ButtonEnum {
+  KEY_0 = '0',
+  KEY_1 = '1',
+  KEY_2 = '2',
+  KEY_3 = '3',
+  KEY_4 = '4',
+  KEY_5 = '5',
+  KEY_6 = '6',
+  KEY_7 = '7',
+  KEY_8 = '8',
+  KEY_9 = '9',
+}
+
+export type buttonAlias = {
+  [key in ButtonEnum]?: string
+}
+
 export type expectedConfig = {
   schoolId: number;
   schoolName?: string;
@@ -19,6 +36,7 @@ export type expectedConfig = {
     height: number;
     name?: string;
   };
+  buttonAlias?: buttonAlias
   infoText?: string;
   isFilled?: boolean;
   allowRetake: boolean;
@@ -131,20 +149,42 @@ export class Configuration {
   }
 
   public get schoolPrimaryColor() { return this.current.schoolPrimaryColor }
-  
+
   public set schoolSecondaryColor(schoolSecondaryColor: string) {
     this.current.schoolSecondaryColor = schoolSecondaryColor
     this.save()
   }
-  
+
   public get schoolSecondaryColor() { return this.current.schoolSecondaryColor }
+
+  public get buttonAlias() {
+    const alias: buttonAlias = {}
+    for (const enumName in ButtonEnum) {
+      // @ts-expect-error: I'm doing magic
+      const buttonName = ButtonEnum[enumName]
+      alias[buttonName as ButtonEnum] = `tasten ${buttonName}`
+    }
+    return Object.assign({}, alias, this.current.buttonAlias ?? {} as buttonAlias)
+  }
+
+  public set buttonAlias(button: buttonAlias) {
+    const currentAlias = this.current.buttonAlias ?? {} as buttonAlias
+    Object.assign(currentAlias, button)
+    for(const key in currentAlias) {
+      if(currentAlias[key as ButtonEnum] === "") {
+        delete currentAlias[key as ButtonEnum]
+      }
+    }
+    this.current.buttonAlias = currentAlias
+    this.save()
+  }
+
+  public get userCpr() { return this.current.userCpr }
 
   public set userCpr(userCpr: string) {
     this.current.userCpr = userCpr
     this.save(false)
   }
-
-  public get userCpr() { return this.current.userCpr }
 
   public clearUserCpr(): void {
     delete this.current.userCpr
@@ -153,11 +193,11 @@ export class Configuration {
 
   public get isFilled(): expectedConfig['isFilled'] {
     return (
-      (this.current.schoolId !== -1) && 
+      (this.current.schoolId !== -1) &&
       (this.current.apiUser !== '') &&
-      (this.current.apiPass !== '') && 
-      (this.current.deviceId && this.current.deviceId !== '') && 
-      (this.current.infoText && this.current.infoText !== '') && 
+      (this.current.apiPass !== '') &&
+      (this.current.deviceId && this.current.deviceId !== '') &&
+      (this.current.infoText && this.current.infoText !== '') &&
       (!!this.current.deviceResolution.height || !!this.current.deviceResolution.height))
   }
 }
