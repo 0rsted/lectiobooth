@@ -1,7 +1,7 @@
+import { BrowserMultiFormatOneDReader } from '@zxing/browser';
 import { changePage } from '../functions/changePage';
 import { table } from '../components';
-import { Configuration } from '../functions/config';
-import { BrowserMultiFormatOneDReader } from '@zxing/browser';
+import { Configuration, ButtonEnum } from '../functions/config';
 import { CPR } from '../functions/cpr';
 import { AddKey, RemoveKey } from '../functions/keyHandler';
 import { Pages } from '.';
@@ -31,10 +31,10 @@ export const renderer = async () => {
   previewCanvas.width = previewVideo.width
   previewCanvas.style.display = 'none'
   const stopButton = document.createElement('button')
-  stopButton.textContent = 'Stop kamera'
+  stopButton.textContent = `Stop kamera (${config.buttonAlias[ButtonEnum.KEY_0]})`
   stopButton.disabled = true
   const startButton = document.createElement('button')
-  startButton.textContent = 'Start kamera'
+  startButton.textContent = `Start kamera (${config.buttonAlias[ButtonEnum.KEY_1]})`
   startButton.disabled = false
   const preview = document.createElement('slot')
   preview.append(previewVideo, previewCanvas)
@@ -51,7 +51,15 @@ export const renderer = async () => {
   const scanComplete = () => setTimeout(() => window.dispatchEvent(changePage(Pages.PICTUREINTERMEDIATE)), 5000)
   const startScan = async () => {
     try {
-      const controls = await reader.decodeFromVideoDevice(config.camera, 'previewVideo', (result, error) => {
+      const constraints: MediaStreamConstraints = {
+        audio: false,
+        video: {
+          deviceId: config.camera,
+          height: {max: 768},
+          width: {max: 1024},
+        }
+      }
+      const controls = await reader.decodeFromConstraints(constraints, 'previewVideo', (result, error) => {
         if (result) {
           if (!(new CPR(result.getText())).isValid)
             return
@@ -62,7 +70,10 @@ export const renderer = async () => {
           const points = result.getResultPoints()
           context.lineWidth = 4;
           context.strokeStyle = "red";
-          context.strokeRect(points[0].getX(), points[0].getY(), points[1].getX() - points[0].getX(), points[1].getY() - points[0].getY())
+          context.beginPath()
+          context.moveTo(points[0].getX(), points[0].getY())
+          context.lineTo(points[1].getX(), points[1].getY())
+          context.stroke()
           previewVideo.style.display = 'none'
           previewCanvas.style.display = 'block'
           config.userCpr = result.getText()
@@ -92,15 +103,15 @@ export const renderer = async () => {
   }
   startButton.addEventListener('click', startScan)
   startButton.click()
-  window.dispatchEvent(AddKey('startCamera', {
-    key: '1',
+  window.dispatchEvent(AddKey(ButtonEnum.KEY_1, {
+    key: ButtonEnum.KEY_1,
     fnc: () => {
       if (!startButton.disabled)
         startButton.click()
     }
   }))
-  window.dispatchEvent(AddKey('stopCamera', {
-    key: 'Escape',
+  window.dispatchEvent(AddKey(ButtonEnum.KEY_0, {
+    key: ButtonEnum.KEY_0,
     fnc: () => {
       if (!stopButton.disabled)
         stopButton.click()
@@ -110,6 +121,6 @@ export const renderer = async () => {
 
 export const unRender = () => {
   document.body.removeAttribute('style')
-  window.dispatchEvent(RemoveKey('startCamera'))
-  window.dispatchEvent(RemoveKey('stopCamera'))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_1))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_0))
 }
