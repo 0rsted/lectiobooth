@@ -1,4 +1,5 @@
 export * from './autoTable'
 export * from './label'
+export * from './labelInput'
 export * from './spinner'
 export * from './textInput'
