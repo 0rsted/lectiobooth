@@ -7,7 +7,7 @@ import { changePage, PageManager } from './functions/changePage';
 import { KeyHandler, Easter, AddKey } from './functions/keyHandler';
 
 new KeyHandler(window)
-new PageManager(window, document.body, true)
+new PageManager(window, document.body)
 const config = new Configuration()
 // config.clearUserCpr()
 document.documentElement.style.setProperty("--schoolPrimaryColor", config.schoolPrimaryColor)
@@ -19,6 +19,14 @@ window.dispatchEvent(AddKey('clearSettings', {
   ctrlKey: false,
   fnc: () => {
     config.reset()
+  }
+}))
+window.dispatchEvent(AddKey('openSettings', {
+  key: 'F12',
+  altKey: false,
+  ctrlKey: false,
+  fnc: () => {
+    window.dispatchEvent(changePage(Pages.SETUP))
   }
 }))
 
