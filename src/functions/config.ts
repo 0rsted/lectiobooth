@@ -2,6 +2,8 @@ import { setItem, getItem } from "./storage"
 
 const savedConfig = 'config'
 
+//#region types and enums
+
 export enum ButtonEnum {
   KEY_0 = '0',
   KEY_1 = '1',
@@ -20,36 +22,40 @@ export type buttonAlias = {
 }
 
 export type expectedConfig = {
+  allowRetake: boolean;
+  apiPass: string;
+  apiUser: string;
+  buttonAlias?: buttonAlias
+  deviceId?: string;
+  deviceResolution?: {
+    height?: number;
+    name?: string;
+    width: number;
+  } | {
+    height: number;
+    name?: string;
+    width?: number;
+  };
+  infoText?: string;
+  isFilled?: boolean; // function 
+  numImages: number;
   schoolId: number;
   schoolName?: string;
   schoolPrimaryColor: string;
   schoolSecondaryColor: string;
-  apiUser: string;
-  apiPass: string;
-  deviceId?: string;
-  deviceResolution?: {
-    width: number;
-    height?: number;
-    name?: string;
-  } | {
-    width?: number;
-    height: number;
-    name?: string;
-  };
-  buttonAlias?: buttonAlias
-  infoText?: string;
-  isFilled?: boolean;
-  allowRetake: boolean;
   userCpr?: string;
 }
 
+//#endregion
+
 const defaultConfig: expectedConfig = {
-  schoolId: -1,
-  apiUser: "",
-  apiPass: "",
-  infoText: undefined,
   allowRetake: false,
+  apiPass: "",
+  apiUser: "",
   deviceResolution: undefined,
+  infoText: undefined,
+  numImages: 4,
+  schoolId: -1,
   schoolPrimaryColor: "#FFFFFF",
   schoolSecondaryColor: "#FF0000",
 }
@@ -61,13 +67,9 @@ export class Configuration {
   constructor() {
     this.load()
     window.addEventListener("configUpdated", function () { console.log('configUpdated, load'); this.load() }.bind(this))
-    /*
-    window.addEventListener("storageUpdated", function () {
-      window.dispatchEvent(new CustomEvent("configUpdated", { detail: 'storageUpdated, loading config' }))
-    }.bind(this))
-    */
   }
 
+  //#region internal functions
   private save = (dispatchEvent = true): void => {
     setItem(savedConfig, JSON.stringify(this.current))
     dispatchEvent && window.dispatchEvent(new CustomEvent("configUpdated", { detail: { current: this.current, previous: this.previous } }))
@@ -91,20 +93,36 @@ export class Configuration {
     this.current = Object.assign({}, defaultConfig)
     this.save()
   }
+  //#endregion
+
+  //#region external magic functions
 
   public get getConfig() { return this.current }
 
-  public set schoolId(schoolId: expectedConfig["schoolId"]) {
-    this.current.schoolId = schoolId
-    this.save()
+  public get isFilled(): expectedConfig['isFilled'] {
+    return (
+      (this.current.schoolId !== -1) &&
+      (this.current.apiUser !== '') &&
+      (this.current.apiPass !== '') &&
+      (this.current.deviceId && this.current.deviceId !== '') &&
+      (this.current.infoText && this.current.infoText !== '') &&
+      (!!this.current.deviceResolution.height || !!this.current.deviceResolution.height))
   }
-  public get schoolId() { return this.current.schoolId }
 
-  public set schoolName(schoolName: expectedConfig["schoolName"]) {
-    this.current.schoolName = schoolName
+  //#endregion
+
+  //#region getters and setters
+  public set allowRetake(allowRetake: expectedConfig["allowRetake"]) {
+    this.current.allowRetake = allowRetake
     this.save()
   }
-  public get schoolName() { return this.current.schoolName }
+  public get allowRetake() { return this.current.allowRetake }
+
+  public set apiPass(apiPass: expectedConfig["apiPass"]) {
+    this.current.apiPass = apiPass
+    this.save()
+  }
+  public get apiPass() { return this.current.apiPass }
 
   public set apiUser(apiUser: expectedConfig["apiUser"]) {
     this.current.apiUser = apiUser
@@ -112,11 +130,32 @@ export class Configuration {
   }
   public get apiUser() { return this.current.apiUser }
 
-  public set apiPass(apiPass: expectedConfig["apiPass"]) {
-    this.current.apiPass = apiPass
+  public set buttonAlias(button: expectedConfig["buttonAlias"]) {
+    const currentAlias = this.current.buttonAlias ?? {} as buttonAlias
+    Object.assign(currentAlias, button)
+    for (const key in currentAlias) {
+      if (currentAlias[key as ButtonEnum] === "") {
+        delete currentAlias[key as ButtonEnum]
+      }
+    }
+    this.current.buttonAlias = currentAlias
     this.save()
   }
-  public get apiPass() { return this.current.apiPass }
+  public get buttonAlias() {
+    const alias: buttonAlias = {}
+    for (const enumName in ButtonEnum) {
+      // @ts-expect-error: I'm doing magic
+      const buttonName = ButtonEnum[enumName]
+      alias[buttonName as ButtonEnum] = `tasten ${buttonName}`
+    }
+    return Object.assign({}, alias, this.current.buttonAlias ?? {} as buttonAlias)
+  }
+
+  public set infoText(infoText: expectedConfig["infoText"]) {
+    this.current.infoText = infoText
+    this.save()
+  }
+  public get infoText() { return this.current.infoText }
 
   public set camera(deviceId: expectedConfig["deviceId"]) {
     this.current.deviceId = deviceId
@@ -130,74 +169,45 @@ export class Configuration {
   }
   public get resolution() { return this.current.deviceResolution }
 
-  public set infoText(infoText: expectedConfig["infoText"]) {
-    this.current.infoText = infoText
+  public set numImages(numImages: expectedConfig['numImages']) {
+    if(isNaN(numImages) && isNaN(parseInt(`${numImages}`)))
+      throw new TypeError("This is supposed to be a NUMBER")
+    this.current.numImages = numImages
+  }
+  public get numImages() { return this.current.numImages }
+
+  public set schoolId(schoolId: expectedConfig["schoolId"]) {
+    this.current.schoolId = schoolId
     this.save()
   }
-  public get infoText() { return this.current.infoText }
+  public get schoolId() { return this.current.schoolId }
 
-  public set allowRetake(allowRetake: boolean) {
-    this.current.allowRetake = allowRetake
+  public set schoolName(schoolName: expectedConfig["schoolName"]) {
+    this.current.schoolName = schoolName
     this.save()
   }
+  public get schoolName() { return this.current.schoolName }
 
-  public get allowRetake() { return this.current.allowRetake }
-
-  public set schoolPrimaryColor(schoolPrimaryColor: string) {
+  public set schoolPrimaryColor(schoolPrimaryColor: expectedConfig["schoolPrimaryColor"]) {
     this.current.schoolPrimaryColor = schoolPrimaryColor
     this.save()
   }
-
   public get schoolPrimaryColor() { return this.current.schoolPrimaryColor }
 
-  public set schoolSecondaryColor(schoolSecondaryColor: string) {
+  public set schoolSecondaryColor(schoolSecondaryColor: expectedConfig["schoolSecondaryColor"]) {
     this.current.schoolSecondaryColor = schoolSecondaryColor
     this.save()
   }
-
   public get schoolSecondaryColor() { return this.current.schoolSecondaryColor }
 
-  public get buttonAlias() {
-    const alias: buttonAlias = {}
-    for (const enumName in ButtonEnum) {
-      // @ts-expect-error: I'm doing magic
-      const buttonName = ButtonEnum[enumName]
-      alias[buttonName as ButtonEnum] = `tasten ${buttonName}`
-    }
-    return Object.assign({}, alias, this.current.buttonAlias ?? {} as buttonAlias)
-  }
-
-  public set buttonAlias(button: buttonAlias) {
-    const currentAlias = this.current.buttonAlias ?? {} as buttonAlias
-    Object.assign(currentAlias, button)
-    for(const key in currentAlias) {
-      if(currentAlias[key as ButtonEnum] === "") {
-        delete currentAlias[key as ButtonEnum]
-      }
-    }
-    this.current.buttonAlias = currentAlias
-    this.save()
-  }
-
-  public get userCpr() { return this.current.userCpr }
-
-  public set userCpr(userCpr: string) {
+  public set userCpr(userCpr: expectedConfig["userCpr"]) {
     this.current.userCpr = userCpr
     this.save(false)
   }
-
+  public get userCpr() { return this.current.userCpr }
   public clearUserCpr(): void {
     delete this.current.userCpr
     this.save()
   }
-
-  public get isFilled(): expectedConfig['isFilled'] {
-    return (
-      (this.current.schoolId !== -1) &&
-      (this.current.apiUser !== '') &&
-      (this.current.apiPass !== '') &&
-      (this.current.deviceId && this.current.deviceId !== '') &&
-      (this.current.infoText && this.current.infoText !== '') &&
-      (!!this.current.deviceResolution.height || !!this.current.deviceResolution.height))
-  }
+  //#endregion
 }
