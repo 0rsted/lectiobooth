@@ -63,6 +63,10 @@ export const renderer = async () => {
       window.dispatchEvent(changePage(Pages.TAKEIMAGE))
     }
   } catch (error) {
+    if(error.message.includes('Der findes ikke noget billede for dette cpr nummer')) {
+      // redirect to takeImage
+      return window.dispatchEvent(changePage(Pages.TAKEIMAGE))
+    }
     clearChildren(body)
     body.append(table([[document.createTextNode('Der findes ingen bruger med det CPR-nummer, prøv at scanne igen')], [document.createTextNode('hvis det stadig ikke virker, så tag kontakt til en underviser')]], { className: 'absoluteCenter' }))
     window.setTimeout(() => {
