@@ -33,6 +33,7 @@ export class PageManager {
     }
     clearChildren(this.#baseElement)
     this.#currentPage = pageFunctions
+    this.#baseElement.dataset.pageId = this.#currentPage.id
     this.#currentPage.renderer()
   }
 }
