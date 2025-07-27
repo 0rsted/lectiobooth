@@ -166,7 +166,10 @@ export const renderer = () => {
   //#region nextPage
   const nextPage = document.createElement('button')
   nextPage.textContent = 'Næste side'
-  nextPage.onclick = () => window.dispatchEvent(changePage(Pages.SCAN))
+  nextPage.onclick = () => {
+    
+    window.dispatchEvent(changePage(Pages.SCAN))
+  }
   //#endregion
 
   //#region render
