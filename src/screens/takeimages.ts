@@ -15,9 +15,10 @@ import BeepSound from '../assets/sounds/beep.ogg?url'
 export const id = 'takeimages'
 
 export const renderer = async () => {
-  const timeoutClick = 2
-  const timeoutAutoChoose = 10
+  const timeoutClick = 5
+  const timeoutAutoChoose = 32
   const config = new Configuration()
+  const images: string[] = []
   const timerBeep = document.createElement('audio')
   timerBeep.src = BeepSound
   timerBeep.load()
@@ -90,6 +91,7 @@ export const renderer = async () => {
   body.append(table)
   //#endregion
 
+  //#region CameraPart
   const wrapper = document.createElement('div')
   wrapper.className = 'wrapper'
   videoCell.append(wrapper)
@@ -104,13 +106,13 @@ export const renderer = async () => {
   wrapper.append(videoWrapper, silhouet)
 
   const imageCells = [imageCell0, imageCell1, imageCell2, imageCell3, imageCell4, imageCell5]
+  //#endregion
 
   //#region effects
   const setSize = async () => {
     height = parseInt(window.getComputedStyle(document.documentElement)?.height) * 0.7
     silhouet.height = height
     width = parseInt(window.getComputedStyle(silhouet)?.width)
-    console.log({height, width})
     videoElement.height = height
     videoElement.width = height * videoRatio
     videoClipLeft = ((height * videoRatio) - width) / 2
@@ -159,19 +161,24 @@ export const renderer = async () => {
     const imageTitle = document.createElement('div')
     imageTitle.textContent = `Billede ${buttonId}`
     const imageCanvas = document.createElement('canvas')
-    images[imageId] = imageCanvas
     const ctx = imageCanvas.getContext('2d')
-    imageCanvas.width = 180
-    imageCanvas.height = 240
-    videoElement.srcObject
-    ctx.drawImage(videoElement, (videoClipLeft/videoScale), 0, (videoHeight/(imageCanvas.height / imageCanvas.width)), videoHeight, 0, 0, imageCanvas.width, imageCanvas.height)
-    imageCell.append(imageTitle, imageCanvas)
+    imageCanvas.width = 360
+    imageCanvas.height = 480
+    ctx.drawImage(videoElement, (videoClipLeft / videoScale), 0, (videoHeight / (imageCanvas.height / imageCanvas.width)), videoHeight, 0, 0, imageCanvas.width, imageCanvas.height)
+    images[imageId] = imageCanvas.toDataURL('image/jpeg', 1)
+    imageCanvas.remove()
+    const image = document.createElement('img')
+    image.src = images[imageId]
+    image.height = 240
+    image.width = 180
+    imageCell.append(imageTitle, image)
     if (buttonId === config.numImages)
       stopCamera()
     isTakingImage = false
   }
 
   const stopCamera = () => {
+    (videoElement.srcObject as MediaStream).getTracks().forEach(track => track.stop())
     const doneText = document.createElement('p')
     const lineBreak = document.createElement('br')
     doneText.append(document.createTextNode(`Du har nu taget de ${config.numImages} billeder du kan tage, og skal nu vælge billedet til lectio.`), lineBreak.cloneNode(), lineBreak.cloneNode())
@@ -206,17 +213,50 @@ export const renderer = async () => {
     }
     chooseImageTimeout()
     videoCell.append(doneText)
-    console.log('vi stopper kameraet, alle billeder er taget')
   }
 
-  const chooseImage = (imageId: number) => {
+  const chooseImage = async (imageId: number) => {
     clearChildren(videoCell)
-    const image = (images[imageId] as HTMLCanvasElement).toDataURL('image/jpeg', 1)
+    const image = images[imageId]
     const showImage = document.createElement('img')
     showImage.src = image
-    const imageText = document.createTextNode('Du har nu valgt et billede, og det bliver lagt på lectio - øjeblik')
-    videoCell.append(imageText, showImage, spinner())
-    console.log(imageId)
+    showImage.height = 480
+    const imageText = document.createElement('p')
+    imageText.textContent = 'Du har nu valgt et billede, og det bliver lagt på lectio - øjeblik'
+    const uploadSpinner = spinner()
+    const renderCanvas = document.createElement('canvas')
+    renderCanvas.height = 240
+    renderCanvas.width = 180
+    const context = renderCanvas.getContext('2d')
+    context.drawImage(showImage, 0, 0, renderCanvas.width, renderCanvas.height)
+    const imageJpeg = renderCanvas.toDataURL('image/jpeg', 1).replace('data:image/jpeg;base64,', '').replace('data:image/jpg;base64,', '')
+    renderCanvas.remove()
+    videoCell.append(imageText, showImage, uploadSpinner)
+    removeKeys()
+    try {
+      // @ts-expect-error: Electron isn't fully typed
+      const result = await window.lectioApi.UpdatePhotoByCprAsync({ config: config.getConfig, cprNumber: config.userCpr, imageJpeg })
+      console.log(result)
+      uploadSpinner.remove()
+      videoCell.append(document.createTextNode('Billedet er nu uploadet, og du er færdig'), document.createElement('br'), document.createTextNode('Siden lukker automatisk ned om 10 sekunder'))
+      window.setTimeout(() => {
+        config.clearUserCpr()
+        window.dispatchEvent(changePage(Pages.SCAN))
+      }, 10000)
+    } catch (e) { console.error(e) }
+  }
+
+  const removeKeys = () => {
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_0))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_1))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_2))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_3))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_4))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_5))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_6))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_7))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_8))
+    window.dispatchEvent(RemoveKey(ButtonEnum.KEY_9))
   }
 
   window.addEventListener('resize', setSize)
@@ -237,16 +277,31 @@ export const renderer = async () => {
     tryPlayVideo(videoElement).then(setSize)
   }
 
+  window.dispatchEvent(AddKey('ClearCPR', { key: 'Escape', fnc: () => {
+    config.clearUserCpr()
+    window.dispatchEvent(changePage(Pages.SCAN))
+  } }))
+
   navigator.mediaDevices.getUserMedia(constraints).then(mediaReceived).catch(console.error)
   //#endregion
 }
 
 export const unRender = () => {
+  window.dispatchEvent(RemoveKey('ClearCPR'))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_0))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_1))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_2))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_3))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_4))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_5))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_6))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_7))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_8))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_9))
   document.body.removeAttribute('style')
-  console.log('unRender')
 }
 
-const isVideoPlaying = (videoElemet: HTMLVideoElement): boolean => (videoElemet.currentTime > 0 && !videoElemet.paused && videoElemet.readyState > 2)
+const isVideoPlaying = (videoElement: HTMLVideoElement): boolean => (videoElement.currentTime > 0 && !videoElement.paused && videoElement.readyState > 2)
 
 const tryPlayVideo = async (videoElement: HTMLVideoElement): Promise<boolean> => {
   if (videoElement?.ended) {
