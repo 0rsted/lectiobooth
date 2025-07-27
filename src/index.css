@@ -5,7 +5,7 @@
   --creenColor: rgb(0, 200, 0);
   --redColor: rgb(200, 0, 0);
   --fgColor: rgb(179, 179, 177);
-  --windowPadding: 1.5rem;
+  --windowPadding: 1rem;
   --hourglass: '\23F3';
   --checkmark: '\2714';
   --error: '\2718';
@@ -141,4 +141,28 @@ table {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+dialog {
+  border: 0;
+  height: 90vh;
+  width: 90vw;
+  background-color: #4f4f4f;
+  color: #888888;
+  border-radius: 30px;
+}
+
+video, img {
+  position: relative;
+}
+
+.videoWrapper {
+  margin: auto;
+  place-self: center;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.wrapper {
+  margin: auto;
 }
