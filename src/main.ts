@@ -24,12 +24,12 @@ function UpsertKeyValue(obj: Record<string, string> | Record<string, string[]>, 
 const createWindow = () => {
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    //    center: true,
-    //    fullscreen: true,
-    //    kiosk: true,
-    //    frame: false,
+    //width: 800,
+    //height: 600,
+    center: true,
+    fullscreen: true,
+    kiosk: true,
+    frame: false,
     webPreferences: {
       nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js'),
