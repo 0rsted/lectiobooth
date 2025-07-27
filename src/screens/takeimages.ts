@@ -7,6 +7,10 @@ import silhouetSvg from '../assets/images/silhouet.svg?url'
 import { AddKey, RemoveKey } from '../functions/keyHandler';
 import { clearChildren } from '../functions/clearChildren';
 import { spinner } from '../components';
+// eslint-disable-next-line import/no-unresolved
+import ClickSound from '../assets/sounds/click.ogg?url'
+// eslint-disable-next-line import/no-unresolved
+import BeepSound from '../assets/sounds/beep.ogg?url'
 
 export const id = 'takeimages'
 
@@ -14,7 +18,12 @@ export const renderer = async () => {
   const timeoutClick = 2
   const timeoutAutoChoose = 10
   const config = new Configuration()
-  const images: HTMLCanvasElement[] = []
+  const timerBeep = document.createElement('audio')
+  timerBeep.src = BeepSound
+  timerBeep.load()
+  const timerClick = document.createElement('audio')
+  timerClick.src = ClickSound
+  timerClick.load()
   let height = parseInt(window.getComputedStyle(document.documentElement)?.height) * 0.7
   let width = 0
   let videoRatio = 1
@@ -128,10 +137,12 @@ export const renderer = async () => {
     dialog.append(countdownNumber)
     const imageTick = () => {
       if (currNum === 0) {
-        countdownNumber.remove()
         click()
-        setTimeout(() => { dialog.close(); dialog.remove() }, 1500)
+        setTimeout(() => { dialog.close(); dialog.remove() }, 500)
       } else {
+        timerBeep.play()
+        if (currNum === 1)
+          countdownNumber.remove()
         countdownNumber.textContent = currNum.toString()
         currNum--
         setTimeout(imageTick, 1000)
@@ -141,7 +152,7 @@ export const renderer = async () => {
   }
 
   const click = () => {
-    console.log('click')
+    timerClick.play()
     const imageId = images.length
     const imageCell = imageCells[imageId]
     const buttonId = imageId + 1
