@@ -2,20 +2,17 @@ import { clearChildren } from '../functions/clearChildren'
 import { getAllSchools } from '../functions/getAllSchools';
 import { Configuration, ButtonEnum, buttonAlias } from '../functions/config';
 import { changePage } from '../functions/changePage';
-import { cameraData, getCameraData, getSingleCameraData, solveCameraResolutions } from '../functions/getCameraData';
+import { getCameraData } from '../functions/getCameraData';
 import { Pages } from '.';
-
+import { AddKey, RemoveKey } from '../functions/keyHandler';
 import {
+  InputType,
   label,
   LabelInput,
   table,
 } from '../components'
 
 export const id = 'setup'
-
-const chooseResolutionField = document.createElement('span')
-chooseResolutionField.className = 'blockSpan'
-chooseResolutionField.textContent = 'vælg et kamera først'
 
 const filledClass = "filled"
 
@@ -25,10 +22,11 @@ export const renderer = () => {
   // create components
 
   const header = document.createElement('h1')
-  header.textContent = 'Velkommen til lectiocam'
+  header.textContent = 'Velkommen til lectiobooth'
 
   const description = document.createElement('p')
-  description.textContent = `Her skal du sætte de grundlæggende indstillinger for programmet.\nNår du har gemt indstillingerne og klikket "næste" vil programmet automatisk starte i "scan" mode.\nFor at komme tilbage til opsætningen kan du enten trykke ALT+F12 for at nulstille alt, eller trykke CTRL+F12 for at gå til opsætningen uden at nulstille noget.\nDet anbefales at brugerne maksimalt har adgang til en numerisk blok, eller alternativt en blok med farvede knapper som vil sende tal til systemet.\nBruger du farvede knapper bør du ændre indstilligerne unnder "Knap 0"-"Knap 9".`
+  description.textContent = `Her skal du sætte de grundlæggende indstillinger for programmet.\nNår du har gemt indstillingerne og klikket "næste" vil programmet automatisk starte i "scan" mode.\nFor at komme tilbage til opsætningen kan du enten trykke ALT+F12 for at nulstille alt, eller trykke CTRL+F12 for at gå til opsætningen uden at nulstille noget.\nDet anbefales at brugerne maksimalt har adgang til en numerisk blok, eller alternativt en blok med farvede knapper som vil sende tal til systemet.\nBruger du farvede knapper bør du ændre indstilligerne under "Knap 0"-"Knap 9".`
+
   //#region schoolDropdown
   // select school
 
@@ -56,7 +54,7 @@ export const renderer = () => {
 
   //#region userPassword
   // api userPassword
-  const userPassword = LabelInput('userPassword', 'Api Adgangskode', config.apiPass, (e: any) => config.apiPass = e.target.value, true)
+  const userPassword = LabelInput('userPassword', 'Api Adgangskode', config.apiPass, (e: any) => config.apiPass = e.target.value, InputType.PASSWORD)
   //#endregion
 
   //#region testConnection
@@ -90,17 +88,25 @@ export const renderer = () => {
   //#endregion
 
   //#region allowRetake
-  const allowRetakeLabel = label('allowRetake', 'Tillad eksisterende\u000D\u000A at tage et nyt billede')
-  allowRetakeLabel.classList.add(filledClass)
-  const allowRetakeCheckbox = document.createElement('input')
-  allowRetakeCheckbox.type = 'checkbox'
-  allowRetakeCheckbox.id = allowRetakeLabel.getAttribute('for')
-  allowRetakeCheckbox.name = allowRetakeLabel.getAttribute('for')
-  allowRetakeCheckbox.checked = config.allowRetake
-  allowRetakeCheckbox.addEventListener('change', (e) => {
-    // @ts-expect-error: typescript and events
-    config.allowRetake = e.target.checked
-  })
+  // @ts-expect-error: typescript and events
+  const allowRetake = LabelInput('allowRetake', 'Tillad eksisterende\u000D\u000A at tage et nyt billede', config.allowRetake.toString(), (e) => { config.allowRetake = e.target.checked }, InputType.CHECKBOX)
+  //#endregion
+
+  //#region numImages
+  const numImages = LabelInput(
+    'numImages',
+    `Antal billeder der må tages og vælges imellem\n(maximalt 6)`,
+    config.numImages,
+    (e) => {
+      // @ts-expect-error: typescript and events
+      const val = parseInt(e.target.value)
+      if(!isNaN(val)) {
+        if(val > 0 && val < 7)
+          config.numImages = val
+      }
+    },
+    InputType.NUMBER
+  )
   //#endregion
 
   //#region buttonNames
@@ -110,53 +116,38 @@ export const renderer = () => {
     config.buttonAlias = updater
   }
 
-  console.log(config.buttonAlias)
-
   const buttonAlias: HTMLElement[][] = []
   for (const enumName in ButtonEnum) {
     // @ts-expect-error: I'm doing magic
     const buttonName = ButtonEnum[enumName]
-    buttonAlias.push(
-      LabelInput(
-        `button${buttonName}`,
-        `Knap ${buttonName}`,
-        (config.buttonAlias && config.buttonAlias[buttonName as ButtonEnum])?
-          config.buttonAlias[buttonName as ButtonEnum] :
-          "",
-        (e: any) => updateButtonText((buttonName.toString() as ButtonEnum), e.target.value),
-        false,
-        `tasten ${buttonName}`
-      )
+    const button = LabelInput(
+      `button${buttonName}`,
+      `Knap ${buttonName}`,
+      (config.buttonAlias && config.buttonAlias[buttonName as ButtonEnum]) ?
+        config.buttonAlias[buttonName as ButtonEnum] :
+        "",
+      (e: any) => updateButtonText((buttonName.toString() as ButtonEnum), e.target.value),
+      InputType.TEXT,
+      `tasten ${buttonName}`
     )
+    window.dispatchEvent(AddKey(`Button${buttonName}`, {
+      key: buttonName.toString(),
+      fnc: () => {
+        const elm = button[0].parentElement.parentElement
+        elm.style.backgroundColor = window.getComputedStyle(document.documentElement)?.getPropertyValue("background-color")
+        elm.style.filter = "invert(1)"
+        window.setTimeout(() => { elm.style.removeProperty('background-color'); elm.style.removeProperty('filter') }, 2500)
+      }
+    }))
+    buttonAlias.push(button)
   }
   //#endregion
 
-  //#region primaryColor
-  const primaryColorLabel = label('primaryColor', 'Vælg skolens primære farve')
-  primaryColorLabel.classList.add(filledClass)
-  const primaryColorSelector = document.createElement('input')
-  primaryColorSelector.id = primaryColorLabel.getAttribute('for')
-  primaryColorSelector.name = primaryColorLabel.getAttribute('for')
-  primaryColorSelector.type = 'color'
-  primaryColorSelector.value = config.schoolPrimaryColor
-  primaryColorSelector.addEventListener('input', (e) => {
-    // @ts-expect-error: typescript and events
-    config.schoolPrimaryColor = e.target.value
-  })
-  //#endregion
-
-  //#region secondaryColor
-  const secondaryColorLabel = label('secondaryColor', 'Vælg skolens primære farve')
-  secondaryColorLabel.classList.add(filledClass)
-  const secondaryColorSelector = document.createElement('input')
-  secondaryColorSelector.id = secondaryColorLabel.getAttribute('for')
-  secondaryColorSelector.name = secondaryColorLabel.getAttribute('for')
-  secondaryColorSelector.type = 'color'
-  secondaryColorSelector.value = config.schoolSecondaryColor
-  secondaryColorSelector.addEventListener('input', (e) => {
-    // @ts-expect-error: typescript and events
-    config.schoolSecondaryColor = e.target.value
-  })
+  //#region color
+  // @ts-expect-error: typescript and events
+  const primaryColor = LabelInput('primaryColor', 'Vælg skolens primære farve', config.schoolPrimaryColor, (e) => { config.schoolPrimaryColor = e.target.value }, InputType.COLOR)
+  // @ts-expect-error: typescript and events
+  const secondaryColor = LabelInput('secondaryColor', 'Vælg skolens sekundære farve', config.schoolSecondaryColor, (e) => { config.schoolSecondaryColor = e.target.value }, InputType.COLOR)
   //#endregion
 
   //#region chooseCamera
@@ -168,11 +159,8 @@ export const renderer = () => {
   chooseCameraButton.addEventListener('click', (e) => { loadCameras(e.target.parentElement, config) })
   chooseCameraButton.textContent = 'Klik for at indlæse kameraer'
   chooseCameraWrapper.appendChild(chooseCameraButton)
-  //#endregion
-
-  //#region chooseResolution
-  const chooseResolutionLabel = document.createElement('span')
-  chooseResolutionLabel.textContent = 'Vælg opløsning'
+  const resolutionText = document.createElement('p')
+  resolutionText.innerText = `Lectio skalerer billedet til 180×240 (B×H)\nBilledet bliver taget i den højeste opløsning\nog beskåret det så det passer`
   //#endregion
 
   //#region nextPage
@@ -193,27 +181,22 @@ export const renderer = () => {
         [testConnectionLabel, testConnectionWrapper],
         [undefined, undefined],
         [warningTextLabel, warningText],
-        [allowRetakeLabel, allowRetakeCheckbox],
+        allowRetake,
+        numImages,
         [undefined, undefined],
         ...buttonAlias,
         [undefined, undefined],
-        [primaryColorLabel, primaryColorSelector],
-        [secondaryColorLabel, secondaryColorSelector],
+        primaryColor,
+        secondaryColor,
         [undefined, undefined],
         [chooseCameraLabel, chooseCameraWrapper],
-        [chooseResolutionLabel, chooseResolutionField],
+        [resolutionText],
         [undefined, nextPage]
       ]))
   //#endregion
 
   //#region effects
   // effects should always run after render
-  if(config.camera && !(config.resolution && (config.resolution.width || config.resolution.height))) {
-    // the camera is selected, but the resolution is NOT.
-    // this is an edge-case, but we'll solve it anyway
-    cameraChosen(config)
-  }
-
   const updateLabels = () => {
     for (const elm of document.getElementsByClassName(filledClass)) {
       elm.classList.remove(filledClass)
@@ -265,15 +248,9 @@ export const renderer = () => {
       })
     }
 
-    if (config.resolution && (config.resolution.height || config.resolution.width)) {
-      chooseResolutionField.textContent = (config.resolution.name + '\r\n' || `${config.resolution.width} × ${config.resolution.height}\r\n`)
-      chooseResolutionLabel.classList.add(filledClass)
-    } else {
-      chooseResolutionField.textContent = "Vælg et kamera først"
-    }
-    allowRetakeLabel.classList.add(filledClass)
-    primaryColorLabel.classList.add(filledClass)
-    secondaryColorLabel.classList.add(filledClass)
+    allowRetake[0].classList.add(filledClass)
+    primaryColor[0].classList.add(filledClass)
+    secondaryColor[0].classList.add(filledClass)
 
   }
   window.addEventListener('configUpdated', updateLabels)
@@ -297,95 +274,64 @@ export const renderer = () => {
       updateLabels()
     }
   }
-
   testConnectionButton.addEventListener('click', testConnectionAsync)
 
+  const addSchoolsAsync = async (parentElement: HTMLSelectElement) => {
+    const schools = await getAllSchools()
+    clearChildren(parentElement)
+    parentElement.disabled = false
+    const thisOption = document.createElement('option')
+    thisOption.value = "-1"
+    thisOption.selected = config.schoolId === -1
+    thisOption.textContent = "Vælg en skole"
+    parentElement.appendChild(thisOption)
+    for (const school of schools) {
+      const thisOption = document.createElement('option')
+      thisOption.value = school.id
+      if (school.id === config.schoolId)
+        thisOption.selected = true
+      thisOption.textContent = school.name
+      parentElement.appendChild(thisOption)
+    }
+  }
+
+  const loadCameras = async (containerElement: HTMLElement) => {
+    clearChildren(containerElement)
+    containerElement.textContent = 'Finder kameraer'
+    const cameras = await getCameraData()
+    if (cameras && cameras.length) {
+      clearChildren(containerElement)
+      const choose = document.createElement('span')
+      choose.className = 'blockSpan'
+      choose.textContent = 'Vælg et kamera'
+      containerElement.appendChild(choose)
+      for (const camera of cameras) {
+        const cameraSelector = document.createElement('span')
+        cameraSelector.textContent = camera.label
+        cameraSelector.className = 'clickSpan'
+        cameraSelector.addEventListener('click', (e) => {
+          config.camera = camera.deviceId
+          // @ts-expect-error: typescript doesn't understand events
+          e.target.parentElement.childNodes.forEach(element => {
+            element.classList?.remove('selected')
+          });
+          // @ts-expect-error: typescript doesn't understand events
+          e.currentTarget.classList.add('selected')
+        })
+        containerElement.appendChild(cameraSelector)
+      }
+    } else {
+      containerElement.textContent = 'Kan ikke finde nogle kameraer'
+    }
+  }
+
   updateLabels()
-  addSchoolsAsync(schoolDropdown, config)
+  addSchoolsAsync(schoolDropdown)
   //#endregion
 }
 
-const addSchoolsAsync = async (parentElement: HTMLSelectElement, config: Configuration) => {
-  const schools = await getAllSchools()
-  clearChildren(parentElement)
-  parentElement.disabled = false
-  const thisOption = document.createElement('option')
-  thisOption.value = "-1"
-  thisOption.selected = config.schoolId === -1
-  thisOption.textContent = "Vælg en skole"
-  parentElement.appendChild(thisOption)
-  for (const school of schools) {
-    const thisOption = document.createElement('option')
-    thisOption.value = school.id
-    if (school.id === config.schoolId)
-      thisOption.selected = true
-    thisOption.textContent = school.name
-    parentElement.appendChild(thisOption)
-  }
-}
-
-const loadCameras = async (containerElement: HTMLElement, config: Configuration) => {
-  clearChildren(containerElement)
-  containerElement.textContent = 'Finder kameraer'
-  const cameras = await getCameraData()
-  if (cameras && cameras.length) {
-    clearChildren(containerElement)
-    const choose = document.createElement('span')
-    choose.className = 'blockSpan'
-    choose.textContent = 'Vælg et kamera'
-    containerElement.appendChild(choose)
-    for (const camera of cameras) {
-      const cameraSelector = document.createElement('span')
-      cameraSelector.textContent = camera.label
-      cameraSelector.className = 'clickSpan'
-      cameraSelector.addEventListener('click', (e) => {
-        chooseCamera(camera, config)
-        // @ts-expect-error: typescript doesn't understand events
-        e.target.parentElement.childNodes.forEach(element => {
-          element.classList?.remove('selected')
-        });
-        // @ts-expect-error: typescript doesn't understand events
-        e.currentTarget.classList.add('selected')
-      })
-      containerElement.appendChild(cameraSelector)
-    }
-  } else {
-    containerElement.textContent = 'Kan ikke finde nogle kameraer'
-  }
-}
-
-const cameraChosen = async (config: Configuration) => {
-  const camera = (await getSingleCameraData(config.camera))
-  chooseCamera(camera, config)
-}
-
-const chooseCamera = async (camera: cameraData, config: Configuration) => {
-  config.camera = camera.deviceId
-  const containerElement = chooseResolutionField.parentElement
-  containerElement.textContent = 'Finder tilgængelige opløsninger'
-  camera = await solveCameraResolutions(camera)
-  if (camera && camera.verifiedResolutions && camera.verifiedResolutions.length) {
-    containerElement.textContent = ''
-    const choose = document.createElement('span')
-    choose.className = 'blockSpan'
-    choose.textContent = 'Vælg en opløsning'
-    containerElement.appendChild(choose)
-    for (const resolution of camera.verifiedResolutions) {
-      const resolutionSelector = document.createElement('span')
-      resolutionSelector.className = 'clickSpan'
-      resolutionSelector.addEventListener('click', (e) => {
-        config.resolution = resolution
-        // @ts-expect-error: typescript doesn't understand events
-        e.target.parentElement.childNodes.forEach(element => {
-          element.classList?.remove('selected')
-        });
-        // @ts-expect-error: typescript doesn't understand events
-        e.target.classList.add('selected')
-      })
-      resolutionSelector.textContent = resolution.name
-      containerElement.appendChild(resolutionSelector)
-    }
-  } else {
-    containerElement.textContent = 'Ingen tilgængelige opløsninger fundet, vælg et andet kamera.'
+export const unRender = () => {
+  for (let i = 0; i < 10; i++) {
+    window.dispatchEvent(RemoveKey(`Button${i}`))
   }
 }

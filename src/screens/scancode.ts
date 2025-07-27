@@ -23,8 +23,8 @@ export const renderer = async () => {
   subtitle.textContent = '(enten telefon eller det fysiske kort)'
   const previewVideo = document.createElement('video')
   previewVideo.id = 'previewVideo'
-  previewVideo.height = config.resolution.height ?? 240
-  previewVideo.width = config.resolution.width ?? 360
+  previewVideo.height = 480
+  previewVideo.width = 640
   const previewCanvas = document.createElement('canvas')
   previewCanvas.id = 'previewCanvas'
   previewCanvas.height = previewVideo.height
@@ -96,7 +96,6 @@ export const renderer = async () => {
     } catch (e) {
       if (e instanceof OverconstrainedError) {
         config.camera = undefined
-        config.resolution = undefined
         window.dispatchEvent(changePage(Pages.SETUP))
       }
     }

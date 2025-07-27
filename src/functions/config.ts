@@ -27,15 +27,6 @@ export type expectedConfig = {
   apiUser: string;
   buttonAlias?: buttonAlias
   deviceId?: string;
-  deviceResolution?: {
-    height?: number;
-    name?: string;
-    width: number;
-  } | {
-    height: number;
-    name?: string;
-    width?: number;
-  };
   infoText?: string;
   isFilled?: boolean; // function 
   numImages: number;
@@ -52,7 +43,6 @@ const defaultConfig: expectedConfig = {
   allowRetake: false,
   apiPass: "",
   apiUser: "",
-  deviceResolution: undefined,
   infoText: undefined,
   numImages: 4,
   schoolId: -1,
@@ -105,8 +95,7 @@ export class Configuration {
       (this.current.apiUser !== '') &&
       (this.current.apiPass !== '') &&
       (this.current.deviceId && this.current.deviceId !== '') &&
-      (this.current.infoText && this.current.infoText !== '') &&
-      (!!this.current.deviceResolution.height || !!this.current.deviceResolution.height))
+      (this.current.infoText && this.current.infoText !== ''))
   }
 
   //#endregion
@@ -163,16 +152,11 @@ export class Configuration {
   }
   public get camera() { return this.current.deviceId }
 
-  public set resolution(deviceResolution: expectedConfig["deviceResolution"]) {
-    this.current.deviceResolution = deviceResolution
-    this.save()
-  }
-  public get resolution() { return this.current.deviceResolution }
-
   public set numImages(numImages: expectedConfig['numImages']) {
     if(isNaN(numImages) && isNaN(parseInt(`${numImages}`)))
       throw new TypeError("This is supposed to be a NUMBER")
-    this.current.numImages = numImages
+    this.current.numImages = (typeof numImages === 'string') ? parseInt(numImages) : numImages
+    this.save()
   }
   public get numImages() { return this.current.numImages }
 
@@ -206,6 +190,8 @@ export class Configuration {
   }
   public get userCpr() { return this.current.userCpr }
   public clearUserCpr(): void {
+    if (!this.current.userCpr)
+      return
     delete this.current.userCpr
     this.save()
   }
