@@ -1,7 +1,7 @@
 import { changePage } from '../functions/changePage';
 import { Pages } from '.';
 import { clearChildren } from '../functions/clearChildren'
-import { Configuration } from '../functions/config';
+import { ButtonEnum, Configuration } from '../functions/config';
 import { spinner, table } from '../components';
 import { AddKey, RemoveKey } from '../functions/keyHandler';
 
@@ -27,14 +27,14 @@ export const renderer = async () => {
       existingImageTitle.textContent = 'Der er allerede et billede'
       const existingImageText = document.createElement('p')
       const existingImage = document.createElement('img')
-      existingImage.src = `data:image/png;base64,${photo}`
+      existingImage.src = `data:image/jpeg;base64,${photo}`
       const nextButton = document.createElement('button')
       if (config.allowRetake) {
-        existingImageText.textContent = 'Din skole lader dig tage et nyt billede, klik på den grønne knap for at starte.'
+        existingImageText.textContent = `Din skole lader dig tage et nyt billede, klik på ${config.buttonAlias[ButtonEnum.KEY_1]} for at starte.`
         nextButton.textContent = 'Start kameraet'
         nextButton.addEventListener('click', () => window.dispatchEvent(changePage(Pages.TAKEIMAGE)))
       } else {
-        existingImageText.textContent = `Din skole lader dig ikke tage et nyt billede, klik på den grønne knap for at afslutte.`
+        existingImageText.textContent = `Din skole lader dig ikke tage et nyt billede, klik på ${config.buttonAlias[ButtonEnum.KEY_1]} for at afslutte.`
         nextButton.textContent = 'Gå tilbage'
         nextButton.addEventListener('click', () => {
           config.clearUserCpr()
@@ -43,12 +43,12 @@ export const renderer = async () => {
       }
       let seconds = 10
       const timerText = document.createElement('slot')
-      timerText.innerText = `\r\n(sker automatisk om ${seconds} sekunder)`
+      timerText.innerText = `\r\n(sker automatisk om ${seconds} sekund${seconds !== 1 ? 'er':''})`
       existingImageText.appendChild(timerText)
       const timeout = () => {
         setTimeout(() => {
           seconds--
-          timerText.innerText = `\r\n(sker automatisk om ${seconds} sekunder)`
+          timerText.innerText = `\r\n(sker automatisk om ${seconds} sekund${seconds !== 1 ? 'er':''})`
           if (seconds === 0) {
             nextButton.click()
           } else {
@@ -57,7 +57,7 @@ export const renderer = async () => {
         }, 1000)
       }
       timeout()
-      window.dispatchEvent(AddKey('greenButton', { key: '1', fnc: () => nextButton.click() }))
+      window.dispatchEvent(AddKey(ButtonEnum.KEY_1, { key: ButtonEnum.KEY_1, fnc: () => nextButton.click() }))
       body.append(table([[existingImageTitle], [existingImage], [existingImageText], [nextButton]], { className: 'absoluteCenter' }))
     } else {
       window.dispatchEvent(changePage(Pages.TAKEIMAGE))
@@ -79,5 +79,5 @@ export const renderer = async () => {
 
 export const unRender = () => {
   document.body.removeAttribute('style')
-  window.dispatchEvent(RemoveKey('greenButton'))
+  window.dispatchEvent(RemoveKey(ButtonEnum.KEY_1))
 }
