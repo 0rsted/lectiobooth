@@ -9,6 +9,7 @@ type config = {
 
 export const table = (bodyCells: row[], config?: config) => {
   const {headerCells, footerCells, style, className} = config ?? {}
+  const cellNumber = Math.max(...bodyCells.filter(e => e).map(e => e.length))
   // elements for the table
   const table = document.createElement('table')
   if(style)
@@ -38,6 +39,8 @@ export const table = (bodyCells: row[], config?: config) => {
     for (const currentCell of currentRow) {
       const td = document.createElement('td')
       td.style.verticalAlign = 'top'
+      if(currentRow.length === 1 && cellNumber > 1)
+        td.colSpan = cellNumber
       td.appendChild(
         (currentCell instanceof HTMLElement || currentCell instanceof Text)
         ? currentCell
