@@ -1,5 +1,6 @@
 export * from './autoTable'
+export * from './imagePlaceholder'
+export * from './input'
 export * from './label'
 export * from './labelInput'
 export * from './spinner'
-export * from './textInput'
